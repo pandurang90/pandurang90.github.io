@@ -1,0 +1,59 @@
+I"K<p>Back again with new features in ruby gem feature_flags (0.1.0).
+Here is my blog post on old version of feature_flags.</p>
+
+<p>I recommend to go through it first if you haven’t, to know more features available in this gem.</p>
+
+<p>Memoization of features is the main change in this version and it really improved performance. Its much more fast now,</p>
+
+<p>What’s new  ????</p>
+
+<p>1)  Added Memoization:
+In previous versions, Everytime it fires sql query to check whether particular feature is enabled or not when we check</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">FeatureFlags</span><span class="p">.</span><span class="nf">enabled?</span><span class="p">(</span><span class="ss">:feature_name</span><span class="p">)</span></code></pre></figure>
+
+<p>worrying about that ???? Now you need not to because it will fire sql query only when there are changes into database, and memoise it, and that optimizes it to great extent.</p>
+
+<p>2) Check for multiple features at a time:
+There may be situation when you need to check following scenario with multiple features,</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">if</span> <span class="no">FeatureFlags</span><span class="p">.</span><span class="nf">enabled?</span><span class="p">(</span><span class="ss">:feature_name1</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="no">FeatureFlags</span><span class="p">.</span><span class="nf">enabled?</span><span class="p">(</span><span class="ss">:feature_name2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="no">FeatureFlags</span><span class="p">.</span><span class="nf">enabled?</span><span class="p">(</span><span class="ss">:feature_name3</span><span class="p">)</span>
+  <span class="c1">## some code</span>
+<span class="k">else</span>
+  <span class="c1">## some code</span>
+<span class="k">end</span></code></pre></figure>
+
+<p>which really increases your code, So now you can do it in better ways</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">if</span> <span class="no">FeatureFlags</span><span class="p">.</span><span class="nf">enabled?</span><span class="p">([</span><span class="ss">:feature_name1</span><span class="p">,</span> <span class="ss">:feature_name2</span><span class="p">,</span> <span class="ss">:feature_name3</span><span class="p">])</span>
+   <span class="c1">## some code</span>
+<span class="k">end</span></code></pre></figure>
+
+<p>So when you have more than one features to check simultaneously, pass them as array of feature names
+but if you have single feature to check then just write</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">if</span> <span class="no">FeatureFlags</span><span class="p">.</span><span class="nf">enabled?</span><span class="p">(</span><span class="ss">:feature_name</span><span class="p">)</span>
+  <span class="c1">## some code</span>
+<span class="k">end</span></code></pre></figure>
+
+<p>3) Another feature is that you can check if any of given features are active or not:</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">if</span> <span class="no">FeatureFlags</span><span class="p">.</span><span class="nf">enabled_any?</span><span class="p">([</span><span class="ss">:feature_name1</span><span class="p">,</span> <span class="ss">:feature_name2</span><span class="p">,</span> <span class="ss">:feature_name3</span><span class="p">])</span>
+   <span class="c1">## some code</span>
+<span class="k">end</span></code></pre></figure>
+
+<p>this will execute code inside if any of [:feature_name1, :feature_name2, :feature_name3] feature is active</p>
+
+<p>4) UI changes:
+  Do everything on single page (add, edit, enable, disable, remove)
+<img src="/images/flags_list.png" alt="_config.yml" /></p>
+
+<p>If you are already using previous versions(&lt;= 0.0.3) and want to migrate to this version (0.1.0) then, after updating gem version
+just add following line to your model
+  include FeatureFlags::FeatureBase
+and generate views again..if you have already generated for new updated view
+rails generate feature_flags:views
+thats it n you are done.  :)</p>
+
+<p>Here is demo <a href="http://feature-flags.herokuapp.com/">http://feature-flags.herokuapp.com/</a></p>
+:ET

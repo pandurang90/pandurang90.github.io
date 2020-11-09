@@ -1,0 +1,13 @@
+I"Å<p>Recently, I have been working with gin framework in golang. So in our case, we needed to add HTTP basic authentication.</p>
+
+<p>gin framework provides basic auth in following way where we need to provide accounts information(pairs of username and passwords)</p>
+
+<script src="https://gist.github.com/pandurang90/a2a801ec2ce3f75264d849013224781d.js"></script>
+
+<p>But It does not work well when you want to authenticate username and password against database. 
+So I wrote following middleware to handle it.</p>
+
+<script src="https://gist.github.com/pandurang90/e893b644b62c6ea0ff8a4095df05eb93.js"></script>
+
+<p>This way it avoids you to specify all username/password pairs in middleware for basicauth.</p>
+:ET

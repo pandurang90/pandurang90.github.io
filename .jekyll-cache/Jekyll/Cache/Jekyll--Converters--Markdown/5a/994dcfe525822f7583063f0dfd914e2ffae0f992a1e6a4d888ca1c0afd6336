@@ -1,0 +1,121 @@
+I"+;<p>Here is the simple way to integrate stripe into rails application, If you ever need to process credit card payments through your Rails applications you should take a look at Stripe.</p>
+
+<p>Stripe is a payment gateway that is easy to set up and which is very developer friendly. It only charges fees on a per-transaction basis and these are very reasonable. There are no monthly fees or other hidden costs. (By the way we’re not being paid to say this.)</p>
+
+<p>Stripe is currently only available in the United States so you’ll need an account at a U.S. bank if you want to use it in your applications. International support is being worked on, however, and should be available soon. This doesn’t mean that you can’t bill international customers, the only restriction is that the seller must be in the U.S.</p>
+
+<p>1) create stripe account at Stripe</p>
+
+<p>2) add gem to gemfile =&gt;</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">gem</span> <span class="s1">'stripe'</span> </code></pre></figure>
+
+<p>3) create config/initializers/stripe.rb  and add follwing lines (stripe keys)  to it</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">Stripe</span><span class="p">.</span><span class="nf">api_key</span> <span class="p">:</span> <span class="n">your_stripe_api_key</span> 
+<span class="no">STRIPE_PUBLIC_KEY</span> <span class="p">:</span> <span class="n">your_stripe_public_key</span> </code></pre></figure>
+
+<p>You will get these keys from your stripe account</p>
+
+<p><img src="/images/apikeys.png" alt="_config.yml" /></p>
+
+<p>4) add these 2 lines to layouts/application.html.erb</p>
+
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript">  <span class="o">&lt;%=</span> <span class="nx">javascript_include_tag</span> <span class="dl">"</span><span class="s2">https://js.stripe.com/v1/</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">application</span><span class="dl">"</span> <span class="o">%&gt;</span>
+  <span class="o">&lt;%=</span> <span class="nx">tag</span> <span class="p">:</span><span class="nx">meta</span><span class="p">,</span> <span class="p">:</span><span class="nx">name</span> <span class="o">=&gt;</span> <span class="dl">"</span><span class="s2">stripe-key</span><span class="dl">"</span><span class="p">,</span> <span class="p">:</span><span class="nx">content</span> <span class="o">=&gt;</span> <span class="nx">STRIPE_PUBLIC_KEY</span> <span class="o">%&gt;</span></code></pre></figure>
+
+<p>this will add Stripe’s Javascript API and set stripe publishable key</p>
+
+<p>then create form for payment:</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="o">&lt;</span><span class="sx">% form_tag(your_payment_path, </span><span class="ss">:method</span><span class="o">=&gt;</span><span class="s1">'post'</span><span class="p">,</span><span class="ss">:id</span><span class="o">=&gt;</span><span class="s2">"stripe-form"</span><span class="p">)</span> <span class="k">do</span> <span class="sx">%&gt;
+  &lt;div class="field"&gt;</span>
+    <span class="o">&lt;</span><span class="sx">%= f.label :email %&gt;
+    &lt;%=</span> <span class="n">f</span><span class="p">.</span><span class="nf">text_field</span> <span class="ss">:email</span> <span class="o">%&gt;</span>
+  <span class="o">&lt;</span><span class="sr">/div&gt;
+  &lt;div class="field"&gt;
+    &lt;%= label_tag :card_number, "Credit Card Number" %&gt;
+    &lt;%= text_field_tag :card_number, nil, name: nil,:class=&gt;'credit-number' %&gt;
+  &lt;/</span><span class="err">d</span><span class="sr">i</span><span class="n">v</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">div</span> <span class="k">class</span><span class="o">=</span><span class="s2">"field"</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="sx">%= label_tag :card_code, "Security Code on Card (CVV)" %&gt;
+    &lt;%=</span> <span class="n">text_field_tag</span> <span class="ss">:card_code</span><span class="p">,</span> <span class="kp">nil</span><span class="p">,</span> <span class="ss">name: </span><span class="kp">nil</span><span class="p">,</span><span class="ss">:class</span><span class="o">=&gt;</span><span class="s1">'credit-security'</span> <span class="o">%&gt;</span>
+  <span class="o">&lt;</span><span class="sr">/div&gt;
+  &lt;div class="field"&gt;
+    &lt;%= label_tag :card_month, "Card Expiration" %&gt;
+    &lt;%= select_month nil, {add_month_numbers: true}, {name: nil, id: "card_month",:class =&gt; "card-expiry-month"} %&gt;
+    &lt;%= select_year nil, {start_year: Date.today.year, end_year: Date.today.year+15}, {name: nil, id: "card_year",:class =&gt; "card-expiry-year"} %&gt;
+  &lt;/</span><span class="err">d</span><span class="sr">i</span><span class="n">v</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="sx">% end </span><span class="o">%&gt;</span>
+<span class="o">&lt;</span><span class="n">div</span> <span class="nb">id</span><span class="o">=</span><span class="s2">"stripe_error"</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">noscript</span><span class="o">&gt;</span><span class="no">JavaScript</span> <span class="n">is</span> <span class="n">not</span> <span class="n">enabled</span> <span class="n">and</span> <span class="n">is</span> <span class="n">required</span> <span class="k">for</span> <span class="n">this</span> <span class="n">form</span><span class="o">.</span> <span class="no">First</span> <span class="n">enable</span> <span class="n">it</span> <span class="k">in</span> <span class="n">your</span> <span class="n">web</span> <span class="n">browser</span>   <span class="n">settings</span><span class="p">.</span>
+  <span class="nf">&lt;</span><span class="o">/</span><span class="n">noscript</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="sr">/div&gt;</span></code></pre></figure>
+
+<p>make sure these payment information should not get saved in your database,
+Next, we’ll need Stripe’s Javascript API:</p>
+
+<p>then add following javascript to handle payment form request to stripe,</p>
+
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">stripeResponseHandler</span><span class="p">(</span><span class="nx">status</span><span class="p">,</span> <span class="nx">response</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">$</span><span class="p">(</span><span class="dl">"</span><span class="s2">#stripe_error</span><span class="dl">"</span><span class="p">).</span><span class="nx">text</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="p">);}</span> 
+  <span class="k">else</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">form$</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="dl">"</span><span class="s2">#stripe-form</span><span class="dl">"</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">token</span> <span class="o">=</span> <span class="nx">response</span><span class="p">[</span><span class="dl">'</span><span class="s1">id</span><span class="dl">'</span><span class="p">];</span>
+    <span class="nx">form$</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="dl">"</span><span class="s2">&lt;input type='hidden' name='stripeToken' value='</span><span class="dl">"</span> <span class="o">+</span> <span class="nx">token</span> <span class="o">+</span> <span class="dl">"</span><span class="s2">'/&gt;</span><span class="dl">"</span><span class="p">);</span>
+    <span class="nx">form$</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nx">submit</span><span class="p">();</span>
+  <span class="p">}}</span>
+  <span class="nx">$</span><span class="p">(</span><span class="nb">document</span><span class="p">).</span><span class="nx">ready</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">Stripe</span><span class="p">.</span><span class="nx">setPublishableKey</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="dl">'</span><span class="s1">meta[name="stripe-key"]</span><span class="dl">'</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="dl">'</span><span class="s1">content</span><span class="dl">'</span><span class="p">));</span>
+    <span class="nx">$</span><span class="p">(</span><span class="dl">"</span><span class="s2">#stripe-form</span><span class="dl">"</span><span class="p">).</span><span class="nx">submit</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">$</span><span class="p">(</span><span class="dl">'</span><span class="s1">.signup-button</span><span class="dl">'</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="dl">"</span><span class="s2">disabled</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">disabled</span><span class="dl">"</span><span class="p">);</span>
+      <span class="nx">Stripe</span><span class="p">.</span><span class="nx">createToken</span><span class="p">({</span> <span class="na">number</span><span class="p">:</span> <span class="nx">$</span><span class="p">(</span><span class="dl">'</span><span class="s1">.credit-number</span><span class="dl">'</span><span class="p">).</span><span class="nx">val</span><span class="p">(),</span>
+                           <span class="na">cvc</span><span class="p">:</span> <span class="nx">$</span><span class="p">(</span><span class="dl">'</span><span class="s1">.credit-security</span><span class="dl">'</span><span class="p">).</span><span class="nx">val</span><span class="p">(),</span>
+                           <span class="na">exp_month</span><span class="p">:</span> <span class="nx">$</span><span class="p">(</span><span class="dl">'</span><span class="s1">.card-expiry-month</span><span class="dl">'</span><span class="p">).</span><span class="nx">val</span><span class="p">(),</span>
+                           <span class="na">exp_year</span><span class="p">:</span> <span class="nx">$</span><span class="p">(</span><span class="dl">'</span><span class="s1">.card-expiry-year</span><span class="dl">'</span><span class="p">).</span><span class="nx">val</span><span class="p">()</span>
+                         <span class="p">},</span> <span class="nx">stripeResponseHandler</span><span class="p">);</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="p">});</span>
+<span class="p">});</span></code></pre></figure>
+
+<p>5)  then on submitting form create stripe customer, that will make user to get subscribed to plan with id ‘stripe_plan_id’.</p>
+
+<p>To create a new plan, go into the dashboard, then, into plans, and, from there, there’s a nice little “wizard” that’ll walk you through the process.
+you can specify a trial period for your users, so, if you want them to have 15 days free, you just have to set it up on the dashboard – no code needed!</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">Stripe</span><span class="o">::</span><span class="no">Customer</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="ss">email: </span><span class="n">users</span> <span class="n">email</span> <span class="p">,</span> <span class="ss">card: </span><span class="n">params</span><span class="p">[</span><span class="s1">'stripeToken'</span><span class="p">],</span> <span class="ss">plan: </span><span class="n">stripe_plan_id</span><span class="p">)</span></code></pre></figure>
+
+<p>after creating customer stripe will send stripe_customer_token. Make sure u store this token in database associating to that particular user, in order to access stripe customer associated with particular user registered in your application.</p>
+
+<p>6) In order to handle stripe errors you can check out this link <a href="https://stripe.com/docs/api?lang=ruby#errors">https://stripe.com/docs/api?lang=ruby#errors</a></p>
+
+<p>7) Next thing you will need to add (as per your application’s requirement) catching stripe events which are sent by stripe on every transactions
+   you can check all types of events here-
+   <a href="https://stripe.com/docs/api?lang=ruby#event_types">https://stripe.com/docs/api?lang=ruby#event_types</a></p>
+
+<p>8) in your stripe account add webhook url as http://your-url/stripe_events</p>
+
+<p><img src="/images/webhook.png" alt="_config.yml" /></p>
+
+<p>then  in routes.rb</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">match</span> <span class="s2">"/stripe_events"</span><span class="p">,</span> <span class="ss">:to</span> <span class="o">=&gt;</span> <span class="s2">"events#stripe_events"</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:stripe_events</span><span class="p">,</span> <span class="ss">:via</span> <span class="o">=&gt;</span> <span class="ss">:post</span></code></pre></figure>
+
+<p>and now you can catch stripe events in events_controller/stripe_events</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">EventsController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+  <span class="n">protect_from_forgery</span> <span class="ss">:except</span> <span class="o">=&gt;</span> <span class="p">[</span> <span class="ss">:stripe_events</span> <span class="p">]</span>
+  <span class="k">def</span> <span class="nf">stripe_events</span>
+    <span class="c1"># params['type'] will give u type of stripe event</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></figure>
+
+<p>using these events you make the changes in your application like activating/deactivating users based on whether payment is done or not.</p>
+
+<p>9) If in case payment fails due some reason for subscription, you can manage it on stripe as shown in following image</p>
+
+<p><img src="/images/subscription.png" alt="_config.yml" /></p>
+
+<p>10) or you can also use ‘stripe_event’ gem , that will also provide a way handle  stripe events.</p>
+:ET

@@ -1,0 +1,17 @@
+I"?<p>At my workplace me and one of my colleague used to transfer files like database dumps etc. for projects from one machine to another.</p>
+
+<p>I came across netcat (nc command) and when we tried that it just worked so quickly, i got surprised with the speed with which it got transferred. :)
+So i wrote applescript that transfers file using netcat, with dialog boxes.</p>
+
+<script src="https://gist.github.com/pandurang90/8538105.js"></script>
+
+<p>after saving(netcat.scpt) this file to your machine just type in your terminal
+osascript your_path/netcat.scpt
+It will simplify your work to transfer file rather than remembering syntax for netcat 
+  OR 
+if you want more shortcut to do this you can add it to .bash_profile file</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">alias </span><span class="nv">netcat</span><span class="o">=</span><span class="s1">'osascript your_path/netcat.scpt'</span></code></pre></figure>
+
+<p>and then just type <code class="language-plaintext highlighter-rouge">netcat</code> in terminal.. enjoy :)</p>
+:ET

@@ -1,0 +1,18 @@
+---
+layout: default
+---
+
+<div class="posts">
+  {% for post in site.posts %}
+    <article class="post">
+
+      <h2><a href="{{ site.baseurl }}{{ post.url }}" onclick="_gaq.push(['_trackpageview', '{{ post.url }}']);">{{ post.title }}</a></h2>
+
+      <div class="entry" style="font-size:15px;">
+        {{ post.excerpt }}
+      </div>
+      <div class='post_date'>{{ post.date | date_to_string }}</div>
+      <a href="{{ site.baseurl }}{{ post.url }}" class="read-more" onclick="_gaq.push(['_trackpageview', '{{ post.url }}']);">Read More</a>
+    </article>
+  {% endfor %}
+</div>

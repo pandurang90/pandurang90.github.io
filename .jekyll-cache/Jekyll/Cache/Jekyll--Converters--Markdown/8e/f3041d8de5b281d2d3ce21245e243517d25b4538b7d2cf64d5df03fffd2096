@@ -1,0 +1,85 @@
+I"%<p>Recently, I worked on one application which required SSL client certificate based authentication.
+So just wanted to share it with you all about how it can be integrated in Rails application.</p>
+
+<p>This article is about using SSL certificates installed into a web browser to authenticate against a Ruby on Rails application with Nginx.</p>
+
+<p>Steps for creating certificates,</p>
+
+<p>1) First thing you will need is to configure openssl.cnf, check following gist for configuring your openssl.cnf , as its big file so cant embed here. <a href="https://gist.github.com/pandurang90/dbe6a67339747ef5bacf">https://gist.github.com/pandurang90/dbe6a67339747ef5bacf</a> 
+In this configuration important thing is setting path to CA dir,</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span> CA_default <span class="o">]</span>
+<span class="nb">dir</span> <span class="o">=</span> /path/to/ca</code></pre></figure>
+
+<p>this is the path where you are going create your CA.</p>
+
+<p>2) Then you will need to create your own CA(Certificate Authority) that issues Digital certificates.
+For that we will use CA.pl script is a perl script that supplies the relevant command line arguments to the openssl command for some common certificate operations. It is intended to simplify the process of certificate creation and management by the use of some simple options.</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">cd</span> /path/to/ca
+CA.pl <span class="nt">-newca</span> </code></pre></figure>
+
+<p>Make sure here you enter domain name in common name field when asked in this.</p>
+
+<p>3) Now generate web server CSR</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">openssl req <span class="nt">-new</span> <span class="nt">-nodes</span> <span class="nt">-keyout</span> www.example.org.key <span class="nt">-out</span> www.example.org.csr</code></pre></figure>
+
+<p>then self sign web server Certificate</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">openssl ca <span class="nt">-config</span> /etc/openssl.cnf <span class="nt">-policy</span> policy_anything <span class="nt">-out</span> www.example.org.crt <span class="nt">-infiles</span> www.example.org.csr</code></pre></figure>
+
+<p>that gives you web server certificates</p>
+
+<p>4) Now its time to configure nginx server,
+ https://gist.github.com/pandurang90/8f0c11819db4c866d985</p>
+
+<p>5) Generating Client certificate,</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">CERT_DIR</span> <span class="o">=</span> <span class="s2">"path/to/ca"</span>
+<span class="n">user_name</span> <span class="o">=</span> <span class="s2">"test user"</span>
+<span class="nb">id</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="k">def</span> <span class="nf">create_p12</span>
+  <span class="n">subj</span> <span class="o">=</span> <span class="s2">"/C=US/ST=YourState/L=city/O=example/OU=example/CN=</span><span class="si">#{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">)/emailAddress=</span><span class="si">#{</span><span class="n">email</span><span class="si">}</span><span class="s2">"</span>
+  <span class="n">dir_name</span>  <span class="o">=</span> <span class="s2">"</span><span class="si">#{</span><span class="no">CERT_DIR</span><span class="si">}#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">"</span>
+  <span class="no">Dir</span><span class="p">.</span><span class="nf">mkdir</span><span class="p">(</span><span class="n">dir_name</span><span class="p">)</span> <span class="k">unless</span> <span class="no">File</span><span class="p">.</span><span class="nf">directory?</span><span class="p">(</span><span class="n">dir_name</span><span class="p">)</span>
+  <span class="n">create_cert</span><span class="p">(</span><span class="n">subj</span><span class="p">)</span>
+  <span class="n">sign_cert</span>
+  <span class="n">generate_p12</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">create_cert</span><span class="p">(</span><span class="n">subj</span><span class="p">)</span>
+  <span class="nb">system</span><span class="p">(</span><span class="s2">"openssl req -new -sha1 -newkey rsa:1024 -nodes -keyout </span><span class="si">#{</span><span class="no">CERT_DIR</span><span class="si">}#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">.key -out </span><span class="si">#{</span><span class="no">CERT_DIR</span><span class="si">}#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">.csr -subj '</span><span class="si">#{</span><span class="n">subj</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">sign_cert</span>
+  <span class="nb">system</span><span class="p">(</span><span class="s2">"openssl ca -batch -config /usr/lib/ssl/openssl.cnf -policy policy_anything -extensions ssl_client -out </span><span class="si">#{</span><span class="no">CERT_DIR</span><span class="si">}#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">.crt -infiles </span><span class="si">#{</span><span class="no">CERT_DIR</span><span class="si">}#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">.csr"</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">generate_p12</span>
+  <span class="nb">system</span><span class="p">(</span><span class="s2">"openssl pkcs12 -export -clcerts -in </span><span class="si">#{</span><span class="no">CERT_DIR</span><span class="si">}#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">.crt -certfile </span><span class="si">#{</span><span class="no">CERT_DIR</span><span class="si">}</span><span class="s2">demoCA/cacert.pem -inkey </span><span class="si">#{</span><span class="no">CERT_DIR</span><span class="si">}#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">.key -out </span><span class="si">#{</span><span class="no">CERT_DIR</span><span class="si">}#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">.p12 -name '</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">' -passout pass:</span><span class="si">#{</span><span class="n">export_password</span><span class="si">}</span><span class="s2"> "</span><span class="p">)</span>
+<span class="k">end</span></code></pre></figure>
+
+<p>Here,</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">subj</span> <span class="o">=</span> <span class="s2">"/C=US/ST=YourState/L=city/O=example/OU=example/CN=</span><span class="si">#{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">)/emailAddress=</span><span class="si">#{</span><span class="n">email</span><span class="si">}</span><span class="s2">"</span></code></pre></figure>
+
+<p>is a subject for certificate which can be unique for each user or same based on settings in your openssl.cnf.</p>
+
+<p>6) Install your certificate on web browser(p12 file), then hit url of website and it will ask to submit client certificate , just select required certificate from list and submit. Then in your controller you can get certificate using,</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">cert</span> <span class="o">=</span> <span class="n">request</span><span class="p">.</span><span class="nf">env</span><span class="p">[</span><span class="s2">"HTTP_X_SSL_CLIENT_S_DN"</span><span class="p">]</span></code></pre></figure>
+
+<p>as we have initialized variable in nginx configuration.</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">proxy_set_header X-SSL-Client-S-DN   <span class="nv">$ssl_client_cert</span> </code></pre></figure>
+
+<p>You can check more options on <a href="http://nginx.org/en/docs/http/ngx_http_ssl_module.html">http://nginx.org/en/docs/http/ngx_http_ssl_module.html</a></p>
+
+<p>7) You can verify whether certificate submitted by user is valid or not , using</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">request</span><span class="p">.</span><span class="nf">env</span><span class="p">[</span><span class="s2">"HTTP-X-CLIENT-VERIFY"</span><span class="p">]</span></code></pre></figure>
+
+<p>returns the result of client certificate verification: “SUCCESS”, “FAILED”, and “NONE” if a certificate was not present.</p>
+:ET

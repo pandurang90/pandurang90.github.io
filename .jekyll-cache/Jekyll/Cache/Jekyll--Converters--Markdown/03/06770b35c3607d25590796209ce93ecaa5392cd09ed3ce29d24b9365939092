@@ -1,0 +1,19 @@
+I"�<p>Recently, I worked on Google Big query integration. I found it bit difficult get it working quickly to make all setup for integrating Google API since documentation is also bit verbose.</p>
+
+<p>So, I would like to share that with you all. This post will take you through integrating Google Big query integration in Ruby application.</p>
+
+<p>First you will need to enable API in google compute console, then generate secret key if you haven’t.
+Here is google big query API service that I have written. Currently, It only has API integrated for fetching data from google big query.</p>
+
+<script src="https://gist.github.com/pandurang90/cec29ae85acea02609a028a6ed8e66c4.js"></script>
+
+<p>Then call it with,</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">big_query_service</span> <span class="o">=</span> <span class="no">GoogleBigQueryService</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="n">big_query_service</span><span class="p">.</span><span class="nf">execute_query</span></code></pre></figure>
+
+<p>Here is more info about Big Query API,  <a href="https://developers.google.com/apis-explorer/#p/bigquery/v2/">https://developers.google.com/apis-explorer/#p/bigquery/v2/</a></p>
+
+<p>One can also use command-line tool, <a href="https://cloud.google.com/compute/docs/gcloud-compute/">https://cloud.google.com/compute/docs/gcloud-compute/</a>
+Though CLI tool gives you data in required format unlike in APIs it returns data in bit confused format but it’s also not intended to be an API, since formatting and output are subject to change.</p>
+:ET

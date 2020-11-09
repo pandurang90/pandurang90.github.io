@@ -1,0 +1,46 @@
+I"�<p>When your application has a form that’s available to everyone for eg. Contact us, you will be spammed! So what can we do about it?</p>
+
+<p>Well, one option is to have all forms secured by authentication… OR we can use a captcha. So, Here is how you can implement your own simple captcha in Ruby on Rails,</p>
+
+<p>First of all we will create Captcha class in lib folder,
+<script src="https://gist.github.com/pandurang90/ae0db85f15d562e5a5c5.js"></script></p>
+
+<p>Here we are dumping the variables into a string using YAML and then encrypt/decrypt.</p>
+
+<p>Then in your Controller,</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">ContactsController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+
+  <span class="k">def</span> <span class="nf">new</span>
+    <span class="vi">@captcha</span> <span class="o">=</span> <span class="no">Captcha</span><span class="p">.</span><span class="nf">new</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">create</span>
+    <span class="vi">@captcha</span> <span class="o">=</span> <span class="no">Captcha</span><span class="p">.</span><span class="nf">decrypt</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="ss">:captcha_secret</span><span class="p">])</span>
+
+    <span class="k">unless</span> <span class="vi">@captcha</span><span class="p">.</span><span class="nf">correct?</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="ss">:captcha</span><span class="p">])</span>
+      <span class="n">flash</span><span class="p">.</span><span class="nf">now</span><span class="p">[</span><span class="ss">:alert</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Please make sure you entered correct value for captcha."</span>
+      <span class="c1"># Here we need to initialize @captcha with new object in order to show </span>
+      <span class="c1"># different captcha each time on form </span>
+      <span class="vi">@captcha</span> <span class="o">=</span> <span class="no">Captcha</span><span class="p">.</span><span class="nf">new</span>
+      <span class="n">render</span> <span class="ss">:new</span>
+    <span class="k">else</span>
+      <span class="no">ContactsMailer</span><span class="p">.</span><span class="nf">notify</span><span class="p">(</span><span class="n">contact</span><span class="p">).</span><span class="nf">deliver</span>
+      <span class="n">flash</span><span class="p">[</span><span class="ss">:notice</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Your message has been sent successfully"</span>
+      <span class="n">redirect_to</span> <span class="n">root_path</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></figure>
+
+<p>In your view,</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="o">&lt;</span><span class="n">div</span> <span class="k">class</span><span class="o">=</span><span class="s2">"field"</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="sx">%= hidden_field_tag :captcha_secret, @captcha.encrypt %&gt;
+  &lt;%=</span> <span class="n">label_tag</span> <span class="ss">:captcha</span><span class="p">,</span> <span class="vi">@captcha</span><span class="p">.</span><span class="nf">question</span> <span class="sx">%&gt;
+  &lt;%= text_field_tag :captcha, "" %&gt;</span>
+<span class="o">&lt;</span><span class="sr">/div&gt;</span></code></pre></figure>
+
+<p>That’s it. And it will look similar to this,</p>
+
+<p><img src="/images/captcha.png" alt="_config.yml" /></p>
+:ET
