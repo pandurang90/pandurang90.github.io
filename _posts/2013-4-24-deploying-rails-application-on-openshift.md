@@ -5,8 +5,7 @@ title: Deploying rails application on to OPENSHIFT + via RHC client tool
 
 
 
-Hi,
-Want to deploy your Ruby on Rails application on openshift ?
+Want to deploy your Ruby on Rails application on openshift?
 then follow these steps,
 
 1) Go to http://www.openshift.com and create an account
