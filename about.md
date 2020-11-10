@@ -4,12 +4,11 @@ title: About
 permalink: /about/
 ---
 
-Some information about you!
+I am Software Engineer who has worked on a wide variety of applications with experience in leading technology teams and building scalable Ruby and Go applications.
 
-### More Information
+I have led team at Teliax and currently leading a small team at Simpl.
 
-A place to include any other types of information that you'd like to include about yourself.
-
+<br/><br/>
 ### Contact me
 
-[email@domain.com](mailto:email@domain.com)
+[pandurang.plw@gmail.com](pandurang.plw@gmail.com)
