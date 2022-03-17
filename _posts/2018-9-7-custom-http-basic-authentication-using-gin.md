@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Custom Http Basic authentication using Gin framework
+excerpt: Custom Http Basic authentication using Gin framework
 ---
 
 Recently, I have been working with gin framework in golang. So in our case, we needed to add HTTP basic authentication. 

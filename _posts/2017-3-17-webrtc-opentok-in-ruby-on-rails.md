@@ -1,6 +1,7 @@
 ---
 layout: post
 title: WebRTC Opentok in Ruby On Rails for Text chat
+excerpt: WebRTC Opentok in Ruby On Rails for Text chat
 ---
 
 This post will take you through adding text chat functionality using Opentok (a WebRTC platform) in Ruby on Rails. 

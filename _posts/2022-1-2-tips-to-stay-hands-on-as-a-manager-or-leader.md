@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Tips to stay hands-on as Tech Lead/Manager
+excerpt: Tips to stay hands-on as Tech Lead/Manager
 ---
 
 

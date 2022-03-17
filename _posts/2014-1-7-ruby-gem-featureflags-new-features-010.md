@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Ruby gem feature_flags new features (0.1.0)
+excerpt: Ruby gem feature_flags new features (0.1.0)
 ---
 
 Back again with new features in ruby gem feature_flags (0.1.0).

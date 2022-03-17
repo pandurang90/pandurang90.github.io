@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Deploying rails application on to OPENSHIFT + via RHC client tool
+excerpt: Deploying rails application on to OPENSHIFT + via RHC client tool
 ---
 
 

@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Manage features in Rails application with feature_flags
+excerpt: Manage features in Rails application with feature_flags
 ---
 
 Manage features in Rails application with feature_flags

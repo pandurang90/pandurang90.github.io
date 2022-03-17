@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Stripe payment Integration in Rails
+excerpt: Stripe payment Integration in Rails
 ---
 
 Here is the simple way to integrate stripe into rails application, If you ever need to process credit card payments through your Rails applications you should take a look at Stripe. 

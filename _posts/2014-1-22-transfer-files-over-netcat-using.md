@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Transfer files over netcat using Applescript
+excerpt: Transfer files over netcat using Applescript
 ---
 
 At my workplace me and one of my colleague used to transfer files like database dumps etc. for projects from one machine to another.

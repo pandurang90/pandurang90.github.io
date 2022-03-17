@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Simple Captcha in Ruby On Rails
+excerpt: Simple Captcha in Ruby On Rails
 ---
 
 When your application has a form that's available to everyone for eg. Contact us, you will be spammed! So what can we do about it? 

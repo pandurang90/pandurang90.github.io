@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Google Big query API integration in Ruby
+excerpt: Google Big query API integration in Ruby
 ---
 
 Recently, I worked on Google Big query integration. I found it bit difficult get it working quickly to make all setup for integrating Google API since documentation is also bit verbose. 

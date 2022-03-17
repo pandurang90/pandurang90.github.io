@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Client side SSL Certificate Authentication with Rails and Nginx
+excerpt: Client side SSL Certificate Authentication with Rails and Nginx
 ---
 
 
