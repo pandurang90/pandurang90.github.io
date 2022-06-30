@@ -7,7 +7,7 @@ excerpt: Tips to stay hands-on as Tech Lead/Manager
 
 As you grow in your career from Software Engineer to Tech Lead/Manager, you spend more time in managing, reviewing code, mentoring someone so you get less time with coding. 
 
-So the question how do you stay hands-on with coding. Here are some tips you can follow,
+So the question is how do you stay hands-on with coding? Here are some tips you can follow,
 
 1. Always remember that as a hands-on manager you are suppose to solve tech debt and not ship features. Picking features would mean you end up being busy somewhere else and you risk delivery of particular feature.
 
