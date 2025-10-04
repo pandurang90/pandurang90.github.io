@@ -85,3 +85,6 @@ exclude:
   - LICENSE
   - README.md
   - CNAME
+
+include:
+  - ads.txt
