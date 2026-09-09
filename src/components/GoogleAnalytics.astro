@@ -10,13 +10,18 @@ const id = siteConfig.googleAnalyticsId;
 	id && import.meta.env.PROD && (
 		<>
 			<script async is:inline src={`https://www.googletagmanager.com/gtag/js?id=${id}`} />
+			{/*
+				Astro wraps define:vars scripts in an IIFE, so gtag() would otherwise be
+				trapped in that closure. Assigning to window keeps it callable from
+				elsewhere later (custom events, consent mode).
+			*/}
 			<script define:vars={{ id }} is:inline>
 				window.dataLayer = window.dataLayer || [];
-				function gtag() {
-					dataLayer.push(arguments);
-				}
-				gtag("js", new Date());
-				gtag("config", id);
+				window.gtag = function gtag() {
+					window.dataLayer.push(arguments);
+				};
+				window.gtag("js", new Date());
+				window.gtag("config", id);
 			</script>
 		</>
 	)

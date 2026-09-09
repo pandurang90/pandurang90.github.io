@@ -15,10 +15,10 @@ export const siteConfig: SiteConfig = {
 	author: "Pandurang Waghulde",
 	// TODO: paste your GA4 Measurement ID here (analytics.google.com -> Admin -> Data Streams).
 	// Old UA-39525929-1 is dead; GA4 IDs look like "G-XXXXXXXXXX". Empty = no tracking.
-	googleAnalyticsId: "",
+	googleAnalyticsId: "G-Q0Y69MK209",
 	// Used as the default description meta property and webmanifest description
 	description:
-		"Software architect with 14+ years building scalable backend systems and 6+ years leading engineering teams in Fintech and Consumer Tech.",
+		"Software craftsman with 14+ years building scalable backend systems and 6+ years leading engineering teams in Fintech and Consumer Tech.",
 	// HTML lang property, found in src/layouts/Base.astro L:18 & astro.config.ts L:48
 	lang: "en",
 	// Meta property, found in src/components/BaseHead.astro L:42
