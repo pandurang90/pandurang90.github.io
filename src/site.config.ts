@@ -17,7 +17,8 @@ export const siteConfig: SiteConfig = {
 	// Old UA-39525929-1 is dead; GA4 IDs look like "G-XXXXXXXXXX". Empty = no tracking.
 	googleAnalyticsId: "",
 	// Used as the default description meta property and webmanifest description
-	description: "Notes on backend engineering, databases, and leading technical teams — by Pandurang Waghulde.",
+	description:
+		"Software architect with 14+ years building scalable backend systems and 6+ years leading engineering teams in Fintech and Consumer Tech.",
 	// HTML lang property, found in src/layouts/Base.astro L:18 & astro.config.ts L:48
 	lang: "en",
 	// Meta property, found in src/components/BaseHead.astro L:42
