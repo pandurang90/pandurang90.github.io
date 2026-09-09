@@ -1,0 +1,18 @@
+---
+import type { HTMLTag, Polymorphic } from "astro/types";
+import type { Project } from "@/data/project";
+
+type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & {
+	project: Project;
+};
+
+const { as: Tag = "div", project } = Astro.props;
+---
+
+<Tag class="flex flex-wrap items-baseline gap-x-2">
+	<a class="cactus-link font-medium" href={project.href} rel="noreferrer" target="_blank">
+		{project.name}
+	</a>
+	{project.label && <span class="text-muted text-sm">{project.label}</span>}
+</Tag>
+<p class="text-muted mt-1 text-sm">{project.description}</p>
