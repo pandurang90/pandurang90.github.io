@@ -1,10 +1,10 @@
 {/* Inlined to avoid FOUC. This is a parser blocking script. */}
 <script is:inline>
 	function getUserPref() {
-		// Dark is this site's default. We only leave it if the visitor has
+		// Light is this site's default. We only leave it if the visitor has
 		// explicitly toggled, so we deliberately ignore prefers-color-scheme.
 		const storedTheme = typeof localStorage !== "undefined" && localStorage.getItem("theme");
-		return storedTheme || "dark";
+		return storedTheme || "light";
 	}
 
 	function setTheme(newTheme) {
