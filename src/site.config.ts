@@ -38,8 +38,8 @@ export const siteConfig: SiteConfig = {
 // Used to generate links in both the Header & Footer.
 export const menuLinks: { path: string; title: string }[] = [
 	{
-		path: "/",
-		title: "Home",
+		path: "/posts/",
+		title: "Posts",
 	},
 	{
 		path: "/about/",
@@ -73,6 +73,6 @@ export const expressiveCodeOptions: AstroExpressiveCodeOptions = {
 		return `[data-theme="${theme.name}"]`;
 	},
 	// One dark, one light theme => https://expressive-code.com/guides/themes/#available-themes
-	themes: ["dracula", "github-light"],
+	themes: ["github-dark", "github-light"],
 	useThemedScrollbars: false,
 };

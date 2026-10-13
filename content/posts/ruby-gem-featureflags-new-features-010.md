@@ -4,25 +4,28 @@ description: "What shipped in version 0.1.0 of the feature_flags Ruby gem, with 
 publishDate: "2014-01-07"
 tags: ["ruby", "feature-flags", "gems"]
 ---
-Back again with new features in ruby gem feature_flags (0.1.0).
-Here is my blog post on old version of feature_flags.
+Back again with new features in the Ruby gem feature_flags (0.1.0).
 
-I recommend to go through it first if you haven't, to know more features available in this gem.
+Here is my [blog post on the old version of feature_flags](/manage-different-features-in-our-ruby/). I recommend going through it first if you haven't, to learn about the other features available in this gem.
 
-Memoization of features is the main change in this version and it really improved performance. Its much more fast now,
+Memoization of features is the main change in this version, and it really improved performance. It's much faster now.
 
-What's new  ????
+What's new?
 
-1)  Added Memoization:
-In previous versions, Everytime it fires sql query to check whether particular feature is enabled or not when we check
+**1. Memoization**
+
+In previous versions, it fired an SQL query every time you checked whether a feature was enabled:
+
 ```ruby
 FeatureFlags.enabled?(:feature_name)
 ```
 
-worrying about that ???? Now you need not to because it will fire sql query only when there are changes into database, and memoise it, and that optimizes it to great extent.
+Worried about that? Now you don't need to be. It fires the SQL query only when something has changed in the database, and memoizes the result, which speeds it up a lot.
 
-2) Check for multiple features at a time:
-There may be situation when you need to check following scenario with multiple features,
+**2. Check multiple features at a time**
+
+There may be situations where you need to check several features together:
+
 ```ruby
 if FeatureFlags.enabled?(:feature_name1) && FeatureFlags.enabled?(:feature_name2) && FeatureFlags.enabled?(:feature_name3)
   ## some code
@@ -30,36 +33,49 @@ else
   ## some code
 end
 ```
- which really increases your code, So now you can do it in better ways
+
+That gets long quickly, so now you can do it like this:
+
 ```ruby
 if FeatureFlags.enabled?([:feature_name1, :feature_name2, :feature_name3])
-   ## some code
+  ## some code
 end
 ```
-So when you have more than one features to check simultaneously, pass them as array of feature names
-but if you have single feature to check then just write
+
+So when you have more than one feature to check at once, pass them as an array of feature names. If you have a single feature to check, just write:
+
 ```ruby
 if FeatureFlags.enabled?(:feature_name)
   ## some code
 end
 ```
-3) Another feature is that you can check if any of given features are active or not:
+
+**3. Check if any of the given features is enabled**
+
 ```ruby
 if FeatureFlags.enabled_any?([:feature_name1, :feature_name2, :feature_name3])
-   ## some code
+  ## some code
 end
 ```
-this will execute code inside if any of [:feature_name1, :feature_name2, :feature_name3] feature is active
 
-4) UI changes:
-  Do everything on single page (add, edit, enable, disable, remove)
+This runs the code inside if any one of `:feature_name1`, `:feature_name2` or `:feature_name3` is enabled.
+
+**4. UI changes**
+
+You can now do everything on a single page (add, edit, enable, disable, remove):
+
 ![flags list](../../src/assets/images/flags_list.png)
 
-If you are already using previous versions(<= 0.0.3) and want to migrate to this version (0.1.0) then, after updating gem version
-just add following line to your model
-  include FeatureFlags::FeatureBase
-and generate views again..if you have already generated for new updated view
-rails generate feature_flags:views
-thats it n you are done.  :)
+If you are already using a previous version (<= 0.0.3) and want to migrate to this version (0.1.0), then after updating the gem, just add the following line to your model:
 
-Here is demo [http://feature-flags.herokuapp.com/](http://feature-flags.herokuapp.com/)
+```ruby
+include FeatureFlags::FeatureBase
+```
+
+And if you had generated the views before, generate them again to get the updated ones:
+
+```bash
+rails generate feature_flags:views
+```
+
+That's it, you are done. :)

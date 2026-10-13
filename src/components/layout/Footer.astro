@@ -1,23 +1,112 @@
 ---
-import { menuLinks, siteConfig } from "@/site.config";
+import Container from "@/components/Container.astro";
+import { siteConfig } from "@/site.config";
 
 const year = new Date().getFullYear();
+const themeButton =
+	"group flex size-9 cursor-pointer items-center justify-center rounded-sm border border-black/15 hover:bg-black/5 focus-visible:bg-black/5 dark:border-white/20 dark:hover:bg-white/5 dark:focus-visible:bg-white/5";
 ---
 
-<footer
-	class="text-muted mt-auto flex w-full flex-col items-center justify-center gap-y-2 pt-20 pb-4 text-center align-top font-semibold sm:flex-row sm:justify-between sm:text-xs"
->
-	<div class="me-0 sm:me-4">
-		&copy; {siteConfig.author}
-		{year}.<span class="inline-block">&nbsp;🚀&nbsp;{siteConfig.title}&nbsp;🌵&nbsp;</span>
-	</div>
-	<nav aria-label="Footer" class="sm:divide-muted flex gap-x-2 sm:gap-x-0 sm:divide-x">
-		{
-			menuLinks.map((link) => (
-				<a class="hover:text-global-text px-4 py-2 hover:underline sm:py-0" href={link.path}>
-					{link.title}
-				</a>
-			))
-		}
-	</nav>
+<footer class="py-6 text-sm">
+	<Container>
+		<div class="relative">
+			<div class="absolute -top-14 right-0">
+				<button
+					id="back-to-top"
+					class="micro-surface group relative flex w-fit cursor-pointer flex-nowrap rounded-sm py-1.5 ps-8 pe-3"
+					type="button"
+				>
+					<svg
+						aria-hidden="true"
+						class="absolute start-2 top-1/2 size-4 -translate-y-1/2 rotate-90 fill-none stroke-current stroke-2"
+						viewBox="0 0 24 24"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<line
+							class="translate-x-2 scale-x-0 transition-transform duration-300 ease-in-out group-hover:translate-x-0 group-hover:scale-x-100"
+							x1="5"
+							x2="19"
+							y1="12"
+							y2="12"></line>
+						<polyline
+							class="translate-x-1 transition-transform duration-300 ease-in-out group-hover:translate-x-0"
+							points="12 5 5 12 12 19"></polyline>
+					</svg>
+					<span class="text-sm">Back to top</span>
+				</button>
+			</div>
+		</div>
+		<div class="flex items-center justify-between gap-4">
+			<div>&copy; {year} &bull; {siteConfig.author}</div>
+			<div class="flex items-center gap-1.5">
+				<button aria-label="Light theme" class={themeButton} data-set-theme="light" type="button">
+					<svg
+						aria-hidden="true"
+						fill="none"
+						height="18"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="1.5"
+						viewBox="0 0 24 24"
+						width="18"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<circle cx="12" cy="12" r="5"></circle>
+						<line x1="12" x2="12" y1="1" y2="3"></line>
+						<line x1="12" x2="12" y1="21" y2="23"></line>
+						<line x1="4.22" x2="5.64" y1="4.22" y2="5.64"></line>
+						<line x1="18.36" x2="19.78" y1="18.36" y2="19.78"></line>
+						<line x1="1" x2="3" y1="12" y2="12"></line>
+						<line x1="21" x2="23" y1="12" y2="12"></line>
+						<line x1="4.22" x2="5.64" y1="19.78" y2="18.36"></line>
+						<line x1="18.36" x2="19.78" y1="5.64" y2="4.22"></line>
+					</svg>
+				</button>
+				<button aria-label="Dark theme" class={themeButton} data-set-theme="dark" type="button">
+					<svg
+						aria-hidden="true"
+						fill="none"
+						height="18"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="1.5"
+						viewBox="0 0 24 24"
+						width="18"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+					</svg>
+				</button>
+			</div>
+		</div>
+	</Container>
 </footer>
+
+<script>
+	// Theme state lives in ThemeProvider.astro; these buttons only ask it to change.
+	const buttons = document.querySelectorAll<HTMLButtonElement>("[data-set-theme]");
+	const mark = () => {
+		const current = document.documentElement.getAttribute("data-theme");
+		buttons.forEach((b) => {
+			const active = b.dataset.setTheme === current;
+			b.classList.toggle("bg-black/5", active);
+			b.classList.toggle("dark:bg-white/5", active);
+			b.setAttribute("aria-pressed", String(active));
+		});
+	};
+	buttons.forEach((b) =>
+		b.addEventListener("click", () => {
+			document.dispatchEvent(
+				new CustomEvent("theme-change", { detail: { theme: b.dataset.setTheme } }),
+			);
+			mark();
+		}),
+	);
+	mark();
+
+	document.getElementById("back-to-top")?.addEventListener("click", () => {
+		window.scrollTo({ behavior: "smooth", top: 0 });
+	});
+</script>

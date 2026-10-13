@@ -4,44 +4,47 @@ description: "Deploying a Rails application to OpenShift with the RHC client too
 publishDate: "2013-04-24"
 tags: ["ruby", "rails", "openshift", "deployment"]
 ---
-Want to deploy your Ruby on Rails application on openshift?
-then follow these steps,
+Want to deploy your Ruby on Rails application on OpenShift? Then follow these steps.
 
-1) Go to http://www.openshift.com and create an account
+:::note
+This post is from 2013 and covers OpenShift v2 and the `rhc` tool, which Red Hat retired in 2017. Today's OpenShift is built on Kubernetes and works very differently. I'm keeping the post as a record of how it worked then.
+:::
 
-2) Click MY APPS > Create an application [https://openshift.redhat.com/app/console/application_types](https://openshift.redhat.com/app/console/application_types) and select Ruby on rails as the type of the application.
+**1.** Go to [openshift.com](http://www.openshift.com) and create an account.
 
-3) Put a name for your application. If this is your first time… make sure that you have  a unique namespace. You can change it here: [https://openshift.redhat.com/app/account](https://openshift.redhat.com/app/account)
+**2.** Click MY APPS > Create an application ([https://openshift.redhat.com/app/console/application_types](https://openshift.redhat.com/app/console/application_types)) and select Ruby on Rails as the application type.
 
-4)  Clone your git repo into your local machine via the ssh codes provided…
+**3.** Enter a name for your application. If this is your first time, make sure you have a unique namespace. You can change it here: [https://openshift.redhat.com/app/account](https://openshift.redhat.com/app/account)
 
-  Example: 
+**4.** Clone your git repo to your local machine using the SSH URL provided. For example:
+
 ```bash
 git clone ssh://cb46d233933f4e79eddc@railsapp-appsource.rhcloud.com/~/git/railsapp.git/
 cd railsapp/
 ```
 
-5) or I recommend to use rhc client tool to create app on openshift
+**5.** Or, which I recommend, use the `rhc` client tool to create the app on OpenShift:
 
 ```bash
-sudo gem install rhc (first install gem rhc)
+sudo gem install rhc   # first install the rhc gem
 rhc app create -a railsapp -t ruby-1.9
 ```
 
-6) Then to add cartridge to your rails application use
+**6.** Then add a database cartridge to your Rails application:
 
 ```bash
 rhc cartridge add -a railsapp -c mysql-5.1
 ```
 
-7) Then pull your code from github,
+**7.** Then pull the example Rails code from GitHub:
 
 ```bash
 git remote add upstream -m master git://github.com/openshift/rails-example.git
 git pull -s recursive -X theirs upstream master
 ```
 
-8) Then you will need to change, your database.yml put this config for production only...
+**8.** Then change your `database.yml`, and put this config in for production only:
+
 ```erb
 production:
   adapter: mysql2
@@ -54,45 +57,49 @@ production:
   password: <%=ENV['OPENSHIFT_MYSQL_DB_PASSWORD']%>
   socket: <%=ENV['OPENSHIFT_MYSQL_DB_SOCKET']%>
 ```
-   Leave the development and test ENV under mysql adapter.
 
-9) Now in your application directory look for .openshift folder
+Leave the development and test environments on the mysql adapter.
 
-    there you will find .openshift/action_hooks/deploy file
+**9.** Now, in your application directory, look for the `.openshift` folder. There you will find the `.openshift/action_hooks/deploy` file:
+
 ```bash
 pushd ${OPENSHIFT_REPO_DIR} > /dev/null
   bundle exec rake db:migrate RAILS_ENV="production"
 popd > /dev/null
 ```
-  commands written between pushd and popd lines will get executed automatically after code is updated on openshift,so if you have any other commands like starting resque, or copying some files after deploy then you can add it here.
 
-10) Now that we have made our changes... push it!
+Commands between the `pushd` and `popd` lines run automatically after your code is updated on OpenShift. So if you have other commands, like starting Resque or copying some files after a deploy, add them here.
+
+**10.** Now that we have made our changes... push it!
+
 ```bash
-git add
-git commit -m “configures database.yml,gemfile and adds .openshift files”
+git add .
+git commit -m "Configure database.yml, Gemfile and .openshift files"
 git push
 ```
-11) That’s all, now check url for your rails app.
 
-12) https://www.openshift.com/page/openshift-environment-variables
-      here you will find all enviroment variables details that are available in openshift.
+**11.** That's all. Now open your Rails app's URL.
 
-13) If you want to associate your own domain name eg. (www.yourdomain.com) with your openshift rails app url then you will need to create url alias as shown below 
+**12.** Here you will find details of all the environment variables available on OpenShift: [https://www.openshift.com/page/openshift-environment-variables](https://www.openshift.com/page/openshift-environment-variables)
+
+**13.** If you want to use your own domain name (e.g. www.yourdomain.com) for your OpenShift Rails app, create a URL alias as shown below:
+
 ```bash
 rhc alias add railsapp www.yourdomain.com
 ```
-then change cname records in your DNS provider account.
+
+Then change the CNAME records in your DNS provider's account:
+
 ![cname openshift dns alias](../../src/assets/images/cname-openshift-dns-alias.jpg)
 
+**14.** If your application needs a persistent directory for its data, use `app-root/data/`. You can access it in your application through the environment variable `OPENSHIFT_DATA_DIR`.
 
-14) If your application require some persistent directory for your data then you can use directory (app-root/data/) you can access this directory in your application using enviroment variable OPENSHIFT_DATA_DIR
+**15.** If you want to remove a cartridge:
 
-15) If you want to remove a cartridge
 ```bash
-Format:
-$rhc cartridge remove shortname –app appname –confirm
+# Format:
+rhc cartridge remove shortname --app appname --confirm
 
-Sample:
-$rhc cartridge remove mysql2  –app railsapp –confirm
-
+# Example:
+rhc cartridge remove mysql-5.1 --app railsapp --confirm
 ```

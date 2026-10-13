@@ -1,4 +1,10 @@
 ---
+import "@fontsource/geist-sans/400.css";
+import "@fontsource/geist-sans/500.css";
+import "@fontsource/geist-sans/600.css";
+import "@fontsource/geist-sans/700.css";
+import "@fontsource/geist-mono/400.css";
+import "@fontsource/geist-mono/600.css";
 import BaseHead from "@/components/BaseHead.astro";
 import Footer from "@/components/layout/Footer.astro";
 import Header from "@/components/layout/Header.astro";
@@ -20,16 +26,24 @@ const {
 	<head>
 		<BaseHead articleDate={articleDate} description={description} ogImage={ogImage} title={title} />
 		<ThemeProvider />
+		<noscript><style>.animate { opacity: 1; translate: none; }</style></noscript>
 	</head>
-	<body
-		class="bg-global-bg text-global-text mx-auto flex min-h-screen max-w-3xl flex-col px-4 pt-16 font-mono text-sm font-normal antialiased sm:px-8"
-	>
+	<body class="bg-global-bg text-global-text flex min-h-screen flex-col font-sans antialiased">
 		<SkipLink />
 		<Header />
-		<main id="main">
+		<main id="main" class="flex-1 pt-32 pb-24">
 			<slot />
 		</main>
 		<Footer />
+		<script is:inline>
+			// Astro Micro's staggered fade-in, plus the scroll state the back-to-top button reads.
+			document.querySelectorAll(".animate").forEach((el, i) => {
+				setTimeout(() => el.classList.add("show"), i * 100);
+			});
+			const onScroll = () => document.documentElement.classList.toggle("scrolled", window.scrollY > 0);
+			document.addEventListener("scroll", onScroll, { passive: true });
+			onScroll();
+		</script>
 		<script is:inline type="speculationrules">
 			{
 				"prefetch": [

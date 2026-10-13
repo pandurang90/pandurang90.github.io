@@ -4,140 +4,145 @@ description: "Integrating Stripe into a Rails app: API keys, the payment form, c
 publishDate: "2013-02-28"
 tags: ["ruby", "rails", "stripe", "payments"]
 ---
-Here is the simple way to integrate stripe into rails application, If you ever need to process credit card payments through your Rails applications you should take a look at Stripe. 
+Here is a simple way to integrate Stripe into a Rails application. If you ever need to process credit card payments in your Rails application, Stripe is worth a look: it's easy to set up, very developer friendly, and charges per transaction with no monthly fees.
 
-Stripe is a payment gateway that is easy to set up and which is very developer friendly. It only charges fees on a per-transaction basis and these are very reasonable. There are no monthly fees or other hidden costs. (By the way we’re not being paid to say this.)
+:::note
+This post is from 2013. Stripe.js v1 and the card-token flow below have since been retired. For new work, use [Stripe Checkout or the Payment Element](https://docs.stripe.com/payments). The webhook part still applies, and I have updated it to verify Stripe's signature, which you should always do.
+:::
 
-Stripe is currently only available in the United States so you’ll need an account at a U.S. bank if you want to use it in your applications. International support is being worked on, however, and should be available soon. This doesn’t mean that you can’t bill international customers, the only restriction is that the seller must be in the U.S.
+**1. Create an account** at [Stripe](https://stripe.com).
 
-
-1) create stripe account at Stripe
-
-2) add gem to gemfile =>  
+**2. Add the gem to your Gemfile:**
 
 ```ruby
-gem 'stripe' 
+gem 'stripe'
 ```
 
-3) create config/initializers/stripe.rb  and add follwing lines (stripe keys)  to it
+**3. Create `config/initializers/stripe.rb`** and add your Stripe keys to it:
+
 ```ruby
-Stripe.api_key : your_stripe_api_key 
-STRIPE_PUBLIC_KEY : your_stripe_public_key 
+Stripe.api_key = ENV.fetch("STRIPE_SECRET_KEY")
+STRIPE_PUBLIC_KEY = ENV.fetch("STRIPE_PUBLIC_KEY")
 ```
 
-You will get these keys from your stripe account
+You will get these keys from your Stripe account:
 
 ![apikeys](../../src/assets/images/apikeys.png)
 
-4) add these 2 lines to layouts/application.html.erb
-
-```javascript
-  <%= javascript_include_tag "https://js.stripe.com/v1/", "application" %>
-  <%= tag :meta, :name => "stripe-key", :content => STRIPE_PUBLIC_KEY %>
-```
-
-this will add Stripe’s Javascript API and set stripe publishable key
-
-then create form for payment:
+**4. Add these 2 lines to `layouts/application.html.erb`:**
 
 ```erb
-<% form_tag(your_payment_path, :method=>'post',:id=>"stripe-form") do %>
+<%= javascript_include_tag "https://js.stripe.com/v1/", "application" %>
+<%= tag :meta, :name => "stripe-key", :content => STRIPE_PUBLIC_KEY %>
+```
+
+This adds Stripe's JavaScript API and sets your Stripe publishable key.
+
+Then create the payment form:
+
+```erb
+<%= form_tag(your_payment_path, method: :post, id: "stripe-form") do %>
   <div class="field">
-    <%= f.label :email %>
-    <%= f.text_field :email %>
+    <%= label_tag :email %>
+    <%= email_field_tag :email %>
   </div>
   <div class="field">
     <%= label_tag :card_number, "Credit Card Number" %>
-    <%= text_field_tag :card_number, nil, name: nil,:class=>'credit-number' %>
+    <%= text_field_tag :card_number, nil, name: nil, class: 'credit-number' %>
   </div>
   <div class="field">
     <%= label_tag :card_code, "Security Code on Card (CVV)" %>
-    <%= text_field_tag :card_code, nil, name: nil,:class=>'credit-security' %>
+    <%= text_field_tag :card_code, nil, name: nil, class: 'credit-security' %>
   </div>
   <div class="field">
     <%= label_tag :card_month, "Card Expiration" %>
-    <%= select_month nil, {add_month_numbers: true}, {name: nil, id: "card_month",:class => "card-expiry-month"} %>
-    <%= select_year nil, {start_year: Date.today.year, end_year: Date.today.year+15}, {name: nil, id: "card_year",:class => "card-expiry-year"} %>
+    <%= select_month nil, {add_month_numbers: true}, {name: nil, id: "card_month", class: "card-expiry-month"} %>
+    <%= select_year nil, {start_year: Date.today.year, end_year: Date.today.year + 15}, {name: nil, id: "card_year", class: "card-expiry-year"} %>
   </div>
 <% end %>
 <div id="stripe_error">
-  <noscript>JavaScript is not enabled and is required for this form. First enable it in your web browser   settings.
-  </noscript>
+  <noscript>JavaScript is not enabled and is required for this form. Please enable it in your web browser settings.</noscript>
 </div>
 ```
 
-make sure these payment information should not get saved in your database,
-Next, we’ll need Stripe’s Javascript API:
+The card fields have `name: nil`, so the card details are never sent to your server. Make sure no payment information gets saved in your database.
 
-then add following javascript to handle payment form request to stripe,
+Then add the following JavaScript to send the card details to Stripe and submit the form with the token it returns:
 
 ```javascript
 function stripeResponseHandler(status, response) {
   if (response.error) {
-    $("#stripe_error").text(response.error.message);} 
-  else {
+    $("#stripe_error").text(response.error.message);
+  } else {
     var form$ = $("#stripe-form");
     var token = response['id'];
     form$.append("<input type='hidden' name='stripeToken' value='" + token + "'/>");
     form$.get(0).submit();
-  }}
-  $(document).ready(function() {
-    Stripe.setPublishableKey($('meta[name="stripe-key"]').attr('content'));
-    $("#stripe-form").submit(function(event) {
-      $('.signup-button').attr("disabled", "disabled");
-      Stripe.createToken({ number: $('.credit-number').val(),
-                           cvc: $('.credit-security').val(),
-                           exp_month: $('.card-expiry-month').val(),
-                           exp_year: $('.card-expiry-year').val()
-                         }, stripeResponseHandler);
+  }
+}
+
+$(document).ready(function() {
+  Stripe.setPublishableKey($('meta[name="stripe-key"]').attr('content'));
+  $("#stripe-form").submit(function(event) {
+    $('.signup-button').attr("disabled", "disabled");
+    Stripe.createToken({ number: $('.credit-number').val(),
+                         cvc: $('.credit-security').val(),
+                         exp_month: $('.card-expiry-month').val(),
+                         exp_year: $('.card-expiry-year').val()
+                       }, stripeResponseHandler);
     return false;
   });
 });
 ```
 
-5)  then on submitting form create stripe customer, that will make user to get subscribed to plan with id 'stripe_plan_id'.
-   
-To create a new plan, go into the dashboard, then, into plans, and, from there, there’s a nice little “wizard” that’ll walk you through the process.
-you can specify a trial period for your users, so, if you want them to have 15 days free, you just have to set it up on the dashboard – no code needed! 
+**5. On form submit, create a Stripe customer,** which subscribes the user to the plan with the id `stripe_plan_id`.
+
+To create a new plan, go to the dashboard, then to Plans, where a small wizard walks you through the process. You can also set a trial period there. If you want users to get 15 days free, you just set it up on the dashboard, no code needed!
 
 ```ruby
-Stripe::Customer.create(email: users email , card: params['stripeToken'], plan: stripe_plan_id)
+customer = Stripe::Customer.create(email: params[:email], card: params[:stripeToken], plan: stripe_plan_id)
 ```
 
-after creating customer stripe will send stripe_customer_token. Make sure u store this token in database associating to that particular user, in order to access stripe customer associated with particular user registered in your application.
+Stripe returns the customer, with its id. Make sure you store `customer.id` in your database against that user, so you can find their Stripe customer later.
 
-6) In order to handle stripe errors you can check out this link [https://stripe.com/docs/api?lang=ruby#errors](https://stripe.com/docs/api?lang=ruby#errors)
-  
- 
-7) Next thing you will need to add (as per your application's requirement) catching stripe events which are sent by stripe on every transactions
-   you can check all types of events here-
-   [https://stripe.com/docs/api?lang=ruby#event_types](https://stripe.com/docs/api?lang=ruby#event_types)
-  
-  
-8) in your stripe account add webhook url as http://your-url/stripe_events
+**6. Handle Stripe errors.** See the list here: [https://docs.stripe.com/api/errors](https://docs.stripe.com/api/errors)
+
+**7. Handle Stripe events.** Depending on your application, you will want to react to the events Stripe sends for every transaction. You can see all the event types here: [https://docs.stripe.com/api/events/types](https://docs.stripe.com/api/events/types)
+
+**8. In your Stripe account, add the webhook URL** `https://your-url/stripe_events`:
 
 ![webhook](../../src/assets/images/webhook.png)
 
-then  in routes.rb
-  
+Then in `routes.rb`:
+
 ```ruby
-match "/stripe_events", :to => "events#stripe_events", :as => :stripe_events, :via => :post
+post "/stripe_events", to: "events#stripe_events", as: :stripe_events
 ```
-   
-and now you can catch stripe events in events_controller/stripe_events
+
+Now you can handle Stripe events in `EventsController#stripe_events`. Always check Stripe's signature first. Without it, anyone who finds the URL can send a fake "payment succeeded" event:
 
 ```ruby
 class EventsController < ApplicationController
-  protect_from_forgery :except => [ :stripe_events ]
+  skip_forgery_protection only: :stripe_events
+
   def stripe_events
-    # params['type'] will give u type of stripe event
+    event = Stripe::Webhook.construct_event(
+      request.body.read,
+      request.headers["Stripe-Signature"],
+      ENV.fetch("STRIPE_WEBHOOK_SECRET")
+    )
+    # event.type tells you which Stripe event this is
+    head :ok
+  rescue JSON::ParserError, Stripe::SignatureVerificationError
+    head :bad_request
   end
 end
 ```
-using these events you make the changes in your application like activating/deactivating users based on whether payment is done or not. 
-   
-9) If in case payment fails due some reason for subscription, you can manage it on stripe as shown in following image
+
+Using these events, you can update your application, for example activating or deactivating users depending on whether their payment went through.
+
+**9. If a subscription payment fails** for some reason, you can choose what Stripe does about it in your account settings:
 
 ![subscription](../../src/assets/images/subscription.png)
 
-10) or you can also use 'stripe_event' gem , that will also provide a way handle  stripe events.
+**10. Or use the `stripe_event` gem,** which also gives you a way to handle Stripe events.

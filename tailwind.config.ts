@@ -19,10 +19,15 @@ export default {
 						blockquote: {
 							borderLeftWidth: "0",
 						},
+						// Astro Micro shows inline code as a soft chip, not wrapped in backticks.
 						code: {
-							border: "1px dotted #666",
-							borderRadius: "2px",
+							backgroundColor: "color-mix(in oklch, var(--color-global-text) 10%, transparent)",
+							borderRadius: "4px",
+							fontWeight: "400",
+							padding: "0.15em 0.35em",
 						},
+						"code::before": { content: "none" },
+						"code::after": { content: "none" },
 						kbd: {
 							"&:where([data-theme='dark'], [data-theme='dark'] *)": {
 								background: "var(--color-global-text)",

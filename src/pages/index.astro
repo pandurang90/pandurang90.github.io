@@ -1,73 +1,93 @@
 ---
-import type { CollectionEntry } from "astro:content";
-import PostPreview from "@/components/blog/PostPreview.astro";
-import ProjectPreview from "@/components/ProjectPreview.astro";
-import SocialList from "@/components/SocialList.astro";
+import { Image } from "astro:assets";
+import avatar from "@/assets/dp.png";
+import ArrowCard from "@/components/ArrowCard.astro";
+import Container from "@/components/Container.astro";
 import { getAllPosts } from "@/data/post";
 import { projects } from "@/data/project";
+import { socialLinks } from "@/data/social";
 import PageLayout from "@/layouts/Base.astro";
 import { collectionDateSort } from "@/utils/date";
 
-// Posts
-const MAX_POSTS = 10;
-const allPosts = await getAllPosts();
-const allPostsByDate = allPosts.sort(collectionDateSort) as CollectionEntry<"post">[];
-const latestPosts = allPostsByDate.slice(0, MAX_POSTS);
-
-// Pinned Posts, set to a max of 3;
-const MAX_PINNED_POSTS = 3;
-const pinnedPosts = allPostsByDate
-	.values()
-	.filter((p) => p.data.pinned)
-	.take(MAX_PINNED_POSTS)
-	.toArray();
-
+const MAX_POSTS = 5;
+const latestPosts = (await getAllPosts()).sort(collectionDateSort).slice(0, MAX_POSTS);
 ---
 
 <PageLayout meta={{ title: "Home" }}>
-	<section>
-		<h1 class="title mb-12">Hi, I’m Pandurang.</h1>
-		<p class="mb-4">
-			Software craftsman with 14+ years of experience building scalable backend systems, and 6+ years leading and growing engineering teams in Fintech and Consumer Tech. Track record of owning end-to-end delivery, managing engineering budgets, and building high-performing teams from hiring through mentorship. Proven ability to architect fault-tolerant, high-throughput distributed systems — and the organisational discipline to ship them reliably at scale.
-		</p>
-		<SocialList />
-	</section>
-	{
-		pinnedPosts.length > 0 && (
-			<section class="mt-16">
-				<h2 class="title mb-6 text-xl">Pinned Posts</h2>
-				<ul class="space-y-4" role="list">
-					{pinnedPosts.map((p) => (
-						<li class="grid gap-1 sm:grid-cols-[auto_1fr]">
-							<PostPreview post={p} />
-						</li>
-					))}
+	<Container>
+		<div class="space-y-16">
+			<section class="animate space-y-4">
+				<div class="flex items-center gap-4">
+					<Image
+						alt="Pandurang Waghulde"
+						class="size-20 rounded-full"
+						densities={[1, 2]}
+						loading="eager"
+						src={avatar}
+						width={80}
+					/>
+					<h1 class="text-2xl font-semibold text-black dark:text-white">Hi, I’m Pandurang.</h1>
+				</div>
+				<p>
+					Software craftsman with 14+ years of experience building scalable backend systems, and 6+ years leading and growing engineering teams in Fintech and Consumer Tech. Track record of owning end-to-end delivery, managing engineering budgets, and building high-performing teams from hiring through mentorship. Proven ability to architect fault-tolerant, high-throughput distributed systems — and the organisational discipline to ship them reliably at scale.
+				</p>			</section>
+
+			<section class="animate space-y-6">
+				<div class="flex flex-wrap items-center justify-between gap-y-2">
+					<h2 class="font-semibold text-black dark:text-white">Latest posts</h2>
+					<a class="micro-link text-sm" href="/posts/">See all posts</a>
+				</div>
+				<ul class="flex flex-col gap-4">
+					{
+						latestPosts.map((p) => (
+							<li>
+								<ArrowCard description={p.data.description} href={`/${p.id}/`} title={p.data.title} />
+							</li>
+						))
+					}
 				</ul>
 			</section>
-		)
-	}
-	<section class="mt-16">
-		<h2 class="title text-accent mb-6 text-xl">Projects</h2>
-		<ul class="space-y-6" role="list">
-			{
-				projects.map((p) => (
-					<li>
-						<ProjectPreview as="h3" project={p} />
-					</li>
-				))
-			}
-		</ul>
-	</section>
-	<section class="mt-16">
-		<h2 class="title text-accent mb-6 text-xl"><a href="/posts/">Posts</a></h2>
-		<ul class="space-y-4" role="list">
-			{
-				latestPosts.map((p) => (
-					<li class="grid gap-1 sm:grid-cols-[auto_1fr]">
-						<PostPreview post={p} />
-					</li>
-				))
-			}
-		</ul>
-	</section>
+
+			<section class="animate space-y-6">
+				<h2 class="font-semibold text-black dark:text-white">Projects</h2>
+				<ul class="flex flex-col gap-4">
+					{
+						projects.map((p) => (
+							<li>
+								<ArrowCard
+									description={p.description}
+									external
+									fullDescription
+									href={p.href}
+									meta={p.label}
+									title={p.name}
+								/>
+							</li>
+						))
+					}
+				</ul>
+			</section>
+
+			<section class="animate space-y-4">
+				<h2 class="font-semibold text-black dark:text-white">Let’s connect</h2>
+				<p>The fastest way to reach me is email. You’ll also find me on:</p>
+				<ul class="flex flex-wrap gap-x-2 gap-y-1">
+					{
+						socialLinks.map((s, i) => (
+							<li class="flex gap-x-2 text-nowrap">
+								<a
+									class="micro-link"
+									href={s.link}
+									{...(s.link.startsWith("http") ? { rel: "noreferrer", target: "_blank" } : {})}
+								>
+									{s.friendlyName}
+								</a>
+								{i < socialLinks.length - 1 && <span aria-hidden="true">/</span>}
+							</li>
+						))
+					}
+				</ul>
+			</section>
+		</div>
+	</Container>
 </PageLayout>

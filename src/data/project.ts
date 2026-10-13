@@ -14,4 +14,11 @@ export const projects: Project[] = [
 		label: "flostep.dev",
 		name: "Flostep",
 	},
+	{
+		description:
+			"An open-source background coding agent that runs on your own machine. Label a GitHub issue, and it works on it with Claude Code in an isolated git worktree, reruns your own checks, and opens a PR. Label the PR after review, and it addresses your comments.",
+		href: "https://github.com/pandurang90/agent-loop",
+		label: "github.com/pandurang90/agent-loop",
+		name: "agent-loop",
+	},
 ];

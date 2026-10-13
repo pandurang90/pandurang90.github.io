@@ -1,13 +1,19 @@
 ---
+import BackToPrevious from "@/components/BackToPrevious.astro";
+import Container from "@/components/Container.astro";
 import PageLayout from "@/layouts/Base.astro";
 
 const meta = {
 	description: "Oops! It looks like this page is lost in space!",
-	title: "Oops! You found a missing page!",
+	title: "Page not found",
 };
 ---
 
 <PageLayout meta={meta}>
-	<h1 class="title mb-12">404 | Oops something went wrong</h1>
-	<p class="mb-8">Please use the navigation to find your way back</p>
+	<Container>
+		<div class="mt-16 grid place-items-center gap-4">
+			<h1 class="animate text-2xl font-semibold text-black dark:text-white">404: Page not found</h1>
+			<div class="animate"><BackToPrevious href="/">Go to home page</BackToPrevious></div>
+		</div>
+	</Container>
 </PageLayout>

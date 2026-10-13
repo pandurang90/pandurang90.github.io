@@ -4,97 +4,99 @@ description: "Adding a lightweight captcha to a Rails form without relying on a 
 publishDate: "2015-03-11"
 tags: ["ruby", "rails", "security"]
 ---
-When your application has a form that's available to everyone for eg. Contact us, you will be spammed! So what can we do about it? 
+When your application has a form that's open to everyone, for example a Contact Us form, you will get spammed! So what can we do about it?
 
-Well, one option is to have all forms secured by authentication... OR we can use a captcha. So, Here is how you can implement your own simple captcha in Ruby on Rails,
+Well, one option is to put every form behind authentication... OR we can use a captcha. So here is how you can implement your own simple captcha in Ruby on Rails.
 
-First of all we will create Captcha class in lib folder,
+:::note
+The first version of this post stored the captcha in a Base64-encoded YAML string. That was a mistake: Base64 is not encryption, so a bot could read or forge the captcha, and calling `YAML.load` on a value from the request is unsafe. The code below signs the captcha with Rails' message verifier instead.
+:::
+
+First of all, we will create a `Captcha` class in the `lib` folder:
+
 ```ruby title="captcha.rb"
 class Captcha
-  attr_accessor :operand1, :operand2, :operator
+  OPERATORS = %w[+ - *].freeze
 
-  def initialize
-    @operand1 = (1..10).to_a.sample
-    @operand2 = (1..10).to_a.sample
-    @operator = [:+, :*, :-].sample  
+  attr_reader :operand1, :operand2, :operator
+
+  def initialize(operand1: rand(1..10), operand2: rand(1..10), operator: OPERATORS.sample)
+    @operand1 = operand1
+    @operand2 = operand2
+    @operator = operator
   end
 
-  def initialize_from(secret)
-    yml = YAML.load(Base64.decode64(secret))
-    @operand1, @operand2, @operator = yml[:operand1], yml[:operand2], yml[:operator]
+  # Signed, not just encoded: the form can carry these values, but if anyone
+  # changes them, verification fails.
+  def self.verifier
+    Rails.application.message_verifier(:captcha)
+  end
+
+  # Returns nil if the secret was tampered with or has expired.
+  def self.from_secret(secret)
+    data = verifier.verified(secret.to_s)
+    data && new(**data.symbolize_keys)
+  end
+
+  def secret
+    self.class.verifier.generate(
+      { operand1: operand1, operand2: operand2, operator: operator },
+      expires_in: 10.minutes
+    )
   end
 
   def correct?(value)
-    result == value.to_i
-  end
-
-  def encrypt
-  	Base64.encode64 to_yaml
-  end
-
-  def self.decrypt(secret)
-    result = new
-    result.initialize_from secret
-    result
-  end
-
-  def to_yaml
-    YAML::dump({
-      :operand1 => @operand1,
-      :operand2 => @operand2,
-      :operator => @operator
-    })
+    value.to_s.strip == result.to_s
   end
 
   def question
-    "#{@operand1} #{@operator.to_s} #{@operand2} = ?"
+    "#{operand1} #{operator} #{operand2} = ?"
   end
 
   private
 
   def result
-    @operand1.send @operator, @operand2
+    operand1.public_send(operator, operand2)
   end
 end
 ```
 
-Here we are dumping the variables into a string using YAML and then encrypt/decrypt.
+The question is shown to the user anyway, so there is nothing to hide. What matters is that nobody can submit a captcha of their own making with an answer they already know. The signature takes care of that, and `expires_in` stops an old solved captcha from being reused forever.
 
-Then in your Controller,
+Then in your controller:
 
 ```ruby
 class ContactsController < ApplicationController
-
   def new
     @captcha = Captcha.new
   end
 
   def create
-    @captcha = Captcha.decrypt(params[:captcha_secret])
+    captcha = Captcha.from_secret(params[:captcha_secret])
 
-    unless @captcha.correct?(params[:captcha])
-      flash.now[:alert] = "Please make sure you entered correct value for captcha."
-      # Here we need to initialize @captcha with new object in order to show 
-      # different captcha each time on form 
-      @captcha = Captcha.new
-      render :new
+    if captcha&.correct?(params[:captcha])
+      ContactsMailer.notify(contact_params).deliver_later
+      redirect_to root_path, notice: "Your message has been sent successfully"
     else
-      ContactsMailer.notify(contact).deliver
-      flash[:notice] = "Your message has been sent successfully"
-      redirect_to root_path
+      flash.now[:alert] = "Please make sure you entered the correct value for the captcha."
+      # Show a different captcha each time the form is rendered
+      @captcha = Captcha.new
+      render :new, status: :unprocessable_entity
     end
   end
 end
 ```
-In your view,
+
+In your view:
+
 ```erb
 <div class="field">
-  <%= hidden_field_tag :captcha_secret, @captcha.encrypt %>
+  <%= hidden_field_tag :captcha_secret, @captcha.secret %>
   <%= label_tag :captcha, @captcha.question %>
   <%= text_field_tag :captcha, "" %>
 </div>
 ```
-That's it. And it will look similar to this,
 
+That's it. And it will look similar to this:
 
 ![captcha](../../src/assets/images/captcha.png)

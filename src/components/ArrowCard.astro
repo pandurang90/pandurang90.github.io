@@ -1,0 +1,49 @@
+---
+// Astro Micro's arrow card: a bordered link with a title, a description, and
+// an arrow that extends on hover. Descriptions wrap to two lines by default;
+// `fullDescription` shows all of it (projects, where the text is the pitch).
+interface Props {
+	href: string;
+	title: string;
+	description?: string | undefined;
+	meta?: string | undefined;
+	external?: boolean;
+	fullDescription?: boolean;
+}
+
+const { href, title, description, meta, external = false, fullDescription = false } = Astro.props;
+---
+
+<a
+	class="micro-surface not-prose group relative flex flex-nowrap px-4 py-3 pe-10"
+	href={href}
+	{...external ? { rel: "noreferrer", target: "_blank" } : {}}
+>
+	<div class="flex min-w-0 flex-1 flex-col">
+		<div class="flex flex-wrap items-baseline gap-x-2">
+			<span class="font-semibold">{title}</span>
+			{meta && <span class="text-muted text-xs">{meta}</span>}
+		</div>
+		{
+			description && (
+				<div class:list={["mt-0.5 text-sm", !fullDescription && "line-clamp-2"]}>{description}</div>
+			)
+		}
+	</div>
+	<svg
+		aria-hidden="true"
+		class="absolute end-2 top-1/2 size-5 -translate-y-1/2 fill-none stroke-current stroke-2"
+		viewBox="0 0 24 24"
+		xmlns="http://www.w3.org/2000/svg"
+	>
+		<line
+			class="translate-x-3 scale-x-0 transition-transform duration-300 ease-in-out group-hover:translate-x-0 group-hover:scale-x-100 group-focus-visible:translate-x-0 group-focus-visible:scale-x-100"
+			x1="5"
+			x2="19"
+			y1="12"
+			y2="12"></line>
+		<polyline
+			class="-translate-x-1 transition-transform duration-300 ease-in-out group-hover:translate-x-0 group-focus-visible:translate-x-0"
+			points="12 5 19 12 12 19"></polyline>
+	</svg>
+</a>

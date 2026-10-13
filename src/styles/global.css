@@ -50,14 +50,17 @@
 }
 
 /* you could refactor below to use light-dark(), depending on your target audience */
+/* Astro Micro's palette: neutral page, softened text, monochrome accents. */
 @theme {
-	--color-global-bg: oklch(98.48% 0 0);
-	--color-global-text: oklch(26.99% 0.0096 235.05);
-	--color-muted: oklch(44.6% 0.03 256.802);
-	--color-link: oklch(55.44% 0.0431 185.69);
-	--color-accent: oklch(55.27% 0.195 19.06);
-	--color-accent-2: oklch(18.15% 0 0);
-	--color-quote: oklch(55.27% 0.195 19.06);
+	--font-sans: "Geist Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+	--font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	--color-global-bg: oklch(97.02% 0 0);
+	--color-global-text: oklch(37.15% 0 0);
+	--color-muted: oklch(55.55% 0 0);
+	--color-link: oklch(20.46% 0 0);
+	--color-accent: oklch(20.46% 0 0);
+	--color-accent-2: oklch(0% 0 0);
+	--color-quote: oklch(55.55% 0 0);
 }
 
 @layer base {
@@ -72,13 +75,13 @@
 
 		&[data-theme="dark"] {
 			color-scheme: dark;
-			--color-global-bg: oklch(23.64% 0.0045 248);
-			--color-global-text: oklch(83.54% 0 264);
-			--color-muted: oklch(70.7% 0.022 261.325);
-			--color-link: oklch(70.44% 0.1133 349);
-			--color-accent: oklch(70.91% 0.1415 163.7);
-			--color-accent-2: oklch(94.66% 0 0);
-			--color-quote: oklch(94.8% 0.106 136.49);
+			--color-global-bg: oklch(20.46% 0 0);
+			--color-global-text: oklch(82.1% 0 0);
+			--color-muted: oklch(70.8% 0 0);
+			--color-link: oklch(98.51% 0 0);
+			--color-accent: oklch(98.51% 0 0);
+			--color-accent-2: oklch(100% 0 0);
+			--color-quote: oklch(70.8% 0 0);
 		}
 
 		--color-mode-transition-duration: 300ms;
@@ -94,8 +97,9 @@
 			--color-quote var(--color-mode-transition-duration) var(--color-mode-transition-easing);
 	}
 
+	/* The header is fixed, so anchors must land below it. */
 	:target {
-		scroll-margin-block: 5ex;
+		scroll-margin-top: 6rem;
 	}
 
 	@view-transition {
@@ -126,6 +130,31 @@
 	.title {
 		@apply text-accent-2 text-2xl font-semibold;
 	}
+
+	/* Astro Micro's bordered, hoverable surfaces (cards, chips, buttons). */
+	.micro-surface {
+		@apply rounded-lg border border-black/15 transition-colors duration-300 ease-in-out hover:bg-black/5 hover:text-black focus-visible:bg-black/5 focus-visible:text-black dark:border-white/20 dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:bg-white/5 dark:focus-visible:text-white;
+	}
+
+	.micro-link {
+		@apply text-current underline decoration-black/30 underline-offset-[3px] transition-colors duration-300 ease-in-out hover:text-black hover:decoration-black/50 dark:decoration-white/30 dark:hover:text-white dark:hover:decoration-white/50;
+	}
+}
+
+/* Micro's staggered fade-in. A script in Base.astro adds .show; without JS a
+   <noscript> rule shows everything. */
+.animate {
+	@apply -translate-y-3 opacity-0 transition-all duration-300 ease-out;
+}
+.animate.show {
+	@apply translate-y-0 opacity-100;
+}
+
+html #back-to-top {
+	@apply pointer-events-none opacity-0;
+}
+html.scrolled #back-to-top {
+	@apply pointer-events-auto opacity-100;
 }
 
 @utility prose {
@@ -138,4 +167,11 @@
 	--tw-prose-links: var(--color-global-text);
 	--tw-prose-quotes: var(--color-quote);
 	--tw-prose-th-borders: #666;
+	/* Code fences render as plain <pre>; give them Micro's soft, theme-aware block. */
+	--tw-prose-pre-bg: color-mix(in oklch, var(--color-global-text) 7%, var(--color-global-bg));
+	--tw-prose-pre-code: var(--color-global-text);
+
+	& pre {
+		border: 1px solid color-mix(in oklch, var(--color-global-text) 18%, transparent);
+	}
 }

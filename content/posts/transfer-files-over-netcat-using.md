@@ -4,23 +4,27 @@ description: "Sending files between machines over netcat, wrapped in an AppleScr
 publishDate: "2014-01-22"
 tags: ["netcat", "applescript", "macos"]
 ---
-At my workplace me and one of my colleague used to transfer files like database dumps etc. for projects from one machine to another.
+At my workplace, one of my colleagues and I used to transfer files like database dumps from one machine to another for our projects.
 
+I came across netcat (the `nc` command), and when we tried it, it just worked. I was surprised by how fast the files got transferred. :)
 
-I came across netcat (nc command) and when we tried that it just worked so quickly, i got surprised with the speed with which it got transferred. :)
-So i wrote applescript that transfers file using netcat, with dialog boxes.
+So I wrote an AppleScript that transfers files using netcat, with dialog boxes.
+
+:::note
+netcat sends files unencrypted, so only use this on a network you trust. Between machines you don't control, use `scp` or `rsync` over SSH instead.
+:::
 
 ```applescript title="netcat.scpt"
 tell application "SystemUIServer"
-	set actionSelected to the button returned of (display dialog "What you want to do?" buttons {"Send file", "Receive file"} default button 2)
+	set actionSelected to the button returned of (display dialog "What do you want to do?" buttons {"Send file", "Receive file"} default button 2)
 	
 	if actionSelected = "Send file" then
 		set filepath to POSIX path of (choose file)
-		display dialog "Please enter IP address of receiver:" default answer ""
+		display dialog "Please enter the IP address of the receiver:" default answer ""
 		set ipAddress to text returned of result
 		if ipAddress = "" then
 			repeat
-				display dialog "IP address cant be blank,Please enter IP address of receiver:" default answer ""
+				display dialog "IP address can't be blank. Please enter the IP address of the receiver:" default answer ""
 				set ipAddress to text returned of result
 				if ipAddress is not equal to "" then exit repeat
 			end repeat
@@ -30,19 +34,19 @@ tell application "SystemUIServer"
 		set filename to text returned of result
 		if filename = "" then
 			repeat
-				display dialog "Filename cant be blank,Please enter a file name with extension:" default answer ""
+				display dialog "File name can't be blank. Please enter a file name with extension:" default answer ""
 				set filename to text returned of result
 				if filename is not equal to "" then exit repeat
 			end repeat
 		end if
 	end if
 	
-	display dialog "Please enter a port number ,must be integer:" default answer ""
+	display dialog "Please enter a port number (must be an integer):" default answer ""
 	set portnumber to text returned of result
 	
 	if portnumber = "" then
 		repeat
-			display dialog "Port number cant be blank, Please enter a port number, must be integer:" default answer ""
+			display dialog "Port number can't be blank. Please enter a port number (must be an integer):" default answer ""
 			set portnumber to text returned of result
 			if portnumber is not equal to "" then exit repeat
 		end repeat
@@ -50,24 +54,27 @@ tell application "SystemUIServer"
 	
 	if actionSelected = "Send file" then
 		display dialog "Sending"
-		do shell script "nc " & ipAddress & " " & portnumber & " < " & filepath & " -"
+		do shell script "nc " & quoted form of ipAddress & " " & quoted form of portnumber & " < " & quoted form of filepath
 		"sending"
 	else
 		display dialog "Receiving"
-		do shell script "nc -l " & portnumber & " > " & filename
+		do shell script "nc -l " & quoted form of portnumber & " > " & quoted form of filename
 		"receiving"
 	end if
 	
 end tell
 ```
 
-after saving(netcat.scpt) this file to your machine just type in your terminal
+After saving this file (`netcat.scpt`) on your machine, just run this in your terminal:
+
+```bash
 osascript your_path/netcat.scpt
-It will simplify your work to transfer file rather than remembering syntax for netcat 
-  OR 
-if you want more shortcut to do this you can add it to .bash_profile file
+```
+
+It makes transferring files simpler than remembering the syntax for netcat. Or, if you want an even shorter way, add an alias to your `.bash_profile`:
+
 ```bash
 alias netcat='osascript your_path/netcat.scpt'
 ```
 
-and then just type `netcat` in terminal.. enjoy :)
+Then just type `netcat` in the terminal. Enjoy :)

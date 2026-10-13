@@ -38,7 +38,7 @@
 		}
 	});
 
-	// listen for theme-change custom event, fired in src/components/ThemeToggle.astro
+	// listen for theme-change custom event, fired by the theme buttons in src/components/layout/Footer.astro
 	document.addEventListener("theme-change", (e) => {
 		setTheme(e.detail.theme);
 	});

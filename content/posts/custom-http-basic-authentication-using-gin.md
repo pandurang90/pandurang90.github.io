@@ -4,9 +4,9 @@ description: "Writing custom HTTP basic authentication middleware for Go's Gin f
 publishDate: "2018-09-07"
 tags: ["go", "gin", "authentication"]
 ---
-Recently, I have been working with gin framework in golang. So in our case, we needed to add HTTP basic authentication. 
+Recently, I have been working with the Gin framework in Go, and in our case we needed to add HTTP basic authentication.
 
-gin framework provides basic auth in following way where we need to provide accounts information(pairs of username and passwords) 
+Gin provides basic auth out of the box, where you pass in the account information (pairs of usernames and passwords):
 
 ```go title="gin_basic_auth.go"
 func main() {
@@ -21,7 +21,7 @@ func main() {
     "manu":   "4321",
   }))
 
-  // hit "localhost:8080/admin/dashboard
+  // hit "localhost:8080/admin/dashboard"
   authorized.GET("/dashboard", func(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"success": true})
   })
@@ -31,22 +31,27 @@ func main() {
 }
 ```
 
-But It does not work well when you want to authenticate username and password against database. 
-So I wrote following middleware to handle it.
+But it doesn't work well when you want to check the username and password against a database. So I wrote the following middleware to handle it.
+
+:::note
+The first version of `authenticateUser` used `FirstOrCreate` and compared plain-text passwords, which meant a failed login could create a new user. It now looks the user up, and compares the password against a bcrypt hash.
+:::
 
 ```go title="custom_gin_basic_auth.go"
-import(
+import (
+  "net/http"
+
   "github.com/gin-gonic/gin"
+  "golang.org/x/crypto/bcrypt"
 )
 
 func main() {
   r := gin.Default()
 
-  // Group using gin.BasicAuth() middleware
-  // gin.Accounts is a shortcut for map[string]string
+  // Group using our own basicAuth() middleware
   authorized := r.Group("/admin", basicAuth())
 
-  // hit "localhost:8080/admin/dashboard
+  // hit "localhost:8080/admin/dashboard"
   authorized.GET("/dashboard", func(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"success": true})
   })
@@ -55,21 +60,13 @@ func main() {
   r.Run(":8080")
 }
 
-
 func basicAuth() gin.HandlerFunc {
-
   return func(c *gin.Context) {
-    auth := strings.SplitN(c.Request.Header.Get("Authorization"), " ", 2)
-
-    if len(auth) != 2 || auth[0] != "Basic" {
-      respondWithError(401, "Unauthorized", c)
-      return
-    }
-    payload, _ := base64.StdEncoding.DecodeString(auth[1])
-    pair := strings.SplitN(string(payload), ":", 2)
-
-    if len(pair) != 2 || !authenticateUser(pair[0], pair[1]) {
-      respondWithError(401, "Unauthorized", c)
+    username, password, ok := c.Request.BasicAuth()
+    if !ok || !authenticateUser(username, password) {
+      // Ask the browser to show its login prompt
+      c.Header("WWW-Authenticate", `Basic realm="Restricted"`)
+      respondWithError(http.StatusUnauthorized, "Unauthorized", c)
       return
     }
 
@@ -79,21 +76,18 @@ func basicAuth() gin.HandlerFunc {
 
 func authenticateUser(username, password string) bool {
   var user models.User
-  // fetch user from database. Here db.Client() is connection to your database. You will need to import your db package above.
-  // This is just for example purpose
-  err := db.Client().Where(models.User{Login: username, Password: password}).FirstOrCreate(&user)
-  if err.Error != nil {
+  // Fetch the user from the database. db.Client() stands for your own
+  // database connection; import your db package above.
+  if err := db.Client().Where("login = ?", username).First(&user).Error; err != nil {
     return false
   }
-  return true
+  // Store password hashes, never plain passwords, and compare with bcrypt.
+  return bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)) == nil
 }
 
 func respondWithError(code int, message string, c *gin.Context) {
-	resp := map[string]string{"error": message}
-
-	c.JSON(code, resp)
-	c.Abort()
+  c.AbortWithStatusJSON(code, gin.H{"error": message})
 }
 ```
 
-This way it avoids you to specify all username/password pairs in middleware for basicauth.
+This way you don't have to list every username and password pair in the middleware.
