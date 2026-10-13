@@ -1,0 +1,380 @@
+---
+// An interactive walk through agent-loop: pick an outcome, label the issue,
+// watch labels change and the log stream. Purely client-side, no network.
+---
+
+<div class="loop-sim not-prose" data-loop-sim>
+	<div class="sim-cards">
+		<div class="sim-card">
+			<div class="sim-card-title"><span class="sim-icon">◎</span> Issue #12 · Add a dark mode toggle</div>
+			<div class="sim-labels" data-labels="issue"></div>
+		</div>
+		<div class="sim-card" data-pr-card hidden>
+			<div class="sim-card-title"><span class="sim-icon">⇄</span> PR #13 · Add a dark mode toggle</div>
+			<div class="sim-labels" data-labels="pr"></div>
+		</div>
+	</div>
+
+	<fieldset class="sim-options" data-options>
+		<legend>What should happen?</legend>
+		<label><input type="radio" name="loop-sim-outcome" value="pass" checked /> Tests pass</label>
+		<label><input type="radio" name="loop-sim-outcome" value="fail" /> Tests fail</label>
+		<label><input type="radio" name="loop-sim-outcome" value="blocked" /> Issue is unclear</label>
+	</fieldset>
+
+	<div class="sim-buttons">
+		<button type="button" data-action="start">Label it agent:ready</button>
+		<button type="button" data-action="revise" disabled>Review it, label agent:revise</button>
+		<button type="button" data-action="reset" class="sim-secondary">Reset</button>
+	</div>
+
+	<ol class="sim-steps" data-steps>
+		<li>Pick</li><li>Claim</li><li>Worktree</li><li>Agent</li><li>Checks</li><li>Verify</li><li>PR</li>
+	</ol>
+
+	<pre class="sim-log" data-log aria-live="polite"><span class="sim-dim">$ ./agent-loop --config ~/.config/agent-loop/myapp run</span></pre>
+</div>
+
+<style>
+	.loop-sim {
+		border: 1px solid color-mix(in oklch, var(--color-global-text) 20%, transparent);
+		border-radius: 0.75rem;
+		padding: 1rem;
+		margin: 1.5rem 0;
+		font-size: 0.9rem;
+		color: var(--color-global-text);
+	}
+	.sim-cards {
+		display: grid;
+		gap: 0.5rem;
+		grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+	}
+	.sim-card {
+		border: 1px solid color-mix(in oklch, var(--color-global-text) 15%, transparent);
+		border-radius: 0.5rem;
+		padding: 0.6rem 0.75rem;
+	}
+	.sim-card[hidden] { display: none; }
+	.sim-card-title { font-weight: 600; }
+	.sim-icon { color: var(--color-accent); margin-right: 0.25rem; }
+	.sim-labels {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		min-height: 1.6rem;
+		margin-top: 0.4rem;
+	}
+	.sim-labels:empty::after {
+		content: "no labels";
+		color: var(--color-muted);
+		font-size: 0.8rem;
+	}
+	.sim-labels :global(.sim-chip) {
+		border-radius: 999px;
+		padding: 0.1rem 0.6rem;
+		font-size: 0.78rem;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		color: #fff;
+		animation: sim-pop 0.25s ease-out;
+	}
+	@keyframes sim-pop {
+		from { transform: scale(0.7); opacity: 0; }
+		to { transform: scale(1); opacity: 1; }
+	}
+	.sim-options {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1rem;
+		margin: 0.9rem 0 0.6rem;
+		border: 0;
+		padding: 0;
+	}
+	.sim-options legend {
+		font-weight: 600;
+		margin-bottom: 0.3rem;
+		width: 100%;
+	}
+	.sim-options label { cursor: pointer; }
+	.sim-options:disabled { opacity: 0.55; }
+	.sim-buttons {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.sim-buttons button {
+		border-radius: 0.4rem;
+		padding: 0.35rem 0.8rem;
+		background: var(--color-accent);
+		color: var(--color-global-bg);
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.sim-buttons button.sim-secondary {
+		background: transparent;
+		color: var(--color-global-text);
+		border: 1px solid color-mix(in oklch, var(--color-global-text) 30%, transparent);
+	}
+	.sim-buttons button:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+	.sim-steps {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+		list-style: none;
+		margin: 0.9rem 0 0.6rem;
+		padding: 0;
+	}
+	.sim-steps li {
+		flex: 1 1 auto;
+		text-align: center;
+		font-size: 0.75rem;
+		padding: 0.2rem 0.4rem;
+		border-radius: 0.3rem;
+		background: color-mix(in oklch, var(--color-global-text) 8%, transparent);
+		color: var(--color-muted);
+		transition: background 0.2s, color 0.2s;
+	}
+	.sim-steps li.is-done {
+		background: color-mix(in oklch, var(--color-accent) 25%, transparent);
+		color: var(--color-global-text);
+	}
+	.sim-steps li.is-active {
+		background: var(--color-accent);
+		color: var(--color-global-bg);
+		font-weight: 600;
+	}
+	.sim-steps li.is-failed {
+		background: #d93f0b;
+		color: #fff;
+		font-weight: 600;
+	}
+	.sim-log {
+		height: 15rem;
+		overflow-y: auto;
+		margin: 0;
+		padding: 0.75rem;
+		border-radius: 0.5rem;
+		background: #111418;
+		color: #d6dbe1;
+		font-size: 0.78rem;
+		line-height: 1.5;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+	.sim-log :global(.sim-dim) { color: #7d8792; }
+	.sim-log :global(.sim-ok) { color: #5fd38d; }
+	.sim-log :global(.sim-bad) { color: #ff7b72; }
+	.sim-log :global(.sim-agent) { color: #8ab4f8; }
+</style>
+
+<script>
+	type Kind = "issue" | "pr";
+	type Line = { text: string; cls?: string | undefined };
+	type SimEvent =
+		| { log: Line }
+		| { step: number; state?: "active" | "done" | "failed" }
+		| { label: Kind; remove?: string; add?: string }
+		| { showPr: true }
+		| { wait: number };
+
+	const COLORS: Record<string, string> = {
+		"agent:ready": "#0e8a16",
+		"agent:working": "#b08800",
+		"agent:pr-open": "#1d76db",
+		"agent:needs-human": "#d93f0b",
+		"agent:revise": "#6f42c1",
+	};
+
+	const L = (text: string, cls?: string): SimEvent => ({ log: { text, cls } });
+	const S = (step: number, state: "active" | "done" | "failed" = "active"): SimEvent => ({ step, state });
+
+	function issueRun(outcome: string): SimEvent[] {
+		const ev: SimEvent[] = [
+			{ label: "issue", add: "agent:ready" },
+			S(0),
+			L("[agent-loop] #12 Add a dark mode toggle → runs/2026-10-13_101500-issue-12"),
+			S(1),
+			{ label: "issue", remove: "agent:ready", add: "agent:working" },
+			L("[agent-loop] claimed #12"),
+			S(2),
+			L("git worktree add --detach ../.agent-loop-worktrees/myapp/issue-12 origin/main", "sim-dim"),
+			L("[agent-loop] setup"),
+			S(3),
+			L("[agent-loop] agent working (timeout 45m, budget $5)"),
+			L("🔧 Read  CLAUDE.md", "sim-agent"),
+			L("🔧 Grep  theme", "sim-agent"),
+		];
+		if (outcome === "blocked") {
+			return ev.concat([
+				L("💬 The issue doesn't say where the toggle goes or whether to remember the choice.", "sim-agent"),
+				L("🔧 Write .agent-loop-pr.md  (BLOCKED: settings page or header? persist per user?)", "sim-agent"),
+				L("[agent-loop] agent finished: 6 turns · $0.21 · 0m40s"),
+				S(4, "failed"),
+				L("[agent-loop] handing #12 back: The agent stopped and needs a human", "sim-bad"),
+				{ label: "issue", remove: "agent:working", add: "agent:needs-human" },
+				L("🤖 commented on #12 with the agent's question. Answer it, relabel agent:ready.", "sim-dim"),
+			]);
+		}
+		ev.push(
+			L("🔧 Edit  app/views/settings/show.html.erb", "sim-agent"),
+			L("🔧 Edit  test/controllers/settings_controller_test.rb", "sim-agent"),
+			L("🔧 Bash  bin/rails test test/controllers/settings_controller_test.rb", "sim-agent"),
+			L("🔧 Bash  git commit -m \"Add dark mode toggle to settings\"", "sim-agent"),
+			L("💬 Added the toggle and a test for it. PR description is in .agent-loop-pr.md.", "sim-agent"),
+			L("[agent-loop] agent finished: 15 turns · $1.05 · 1m20s"),
+			S(4),
+			L("checks: 1 commit · tree clean · no protected paths touched", "sim-dim"),
+			S(5),
+			L("[agent-loop] verifying"),
+			L("== bin/rails test test/controllers/settings_controller_test.rb", "sim-dim"),
+		);
+		if (outcome === "fail") {
+			return ev.concat([
+				L("6 runs, 13 assertions, 1 failures, 0 errors", "sim-bad"),
+				S(5, "failed"),
+				L("[agent-loop] handing #12 back: Verification failed on agent/issue-12", "sim-bad"),
+				{ label: "issue", remove: "agent:working", add: "agent:needs-human" },
+				L("🤖 commented on #12 with the failing output. Worktree kept for you to look at.", "sim-dim"),
+			]);
+		}
+		return ev.concat([
+			L("6 runs, 14 assertions, 0 failures, 0 errors", "sim-ok"),
+			L("== verify passed", "sim-ok"),
+			S(6),
+			L("git push origin HEAD:refs/heads/agent/issue-12", "sim-dim"),
+			L("[agent-loop] opened https://github.com/you/myapp/pull/13", "sim-ok"),
+			{ showPr: true },
+			{ label: "issue", remove: "agent:working", add: "agent:pr-open" },
+			L("🤖 commented on #12: Opened #13 (15 turns · $1.05 · 1m20s)", "sim-dim"),
+			L("Your turn: review PR #13 and ask for changes.", "sim-ok"),
+		]);
+	}
+
+	function reviseRun(): SimEvent[] {
+		return [
+			L("you: \"Persist the choice per user, not in localStorage\"  (review thread)", "sim-dim"),
+			L("you: \"Toggle label should say Theme\"  (review thread)", "sim-dim"),
+			{ label: "pr", add: "agent:revise" },
+			S(0),
+			L("[agent-loop] PR #13 revise: 2 unresolved threads → runs/2026-10-13_103000-pr-13"),
+			S(1),
+			{ label: "pr", remove: "agent:revise", add: "agent:working" },
+			S(2),
+			L("git worktree add --detach ../.agent-loop-worktrees/myapp/issue-12 origin/agent/issue-12", "sim-dim"),
+			S(3),
+			L("🔧 Edit  app/models/user.rb", "sim-agent"),
+			L("🔧 Edit  app/views/settings/show.html.erb", "sim-agent"),
+			L("🔧 Bash  git commit -m \"Store theme preference on the user\"", "sim-agent"),
+			L("🔧 Bash  git commit -m \"Rename toggle label to Theme\"", "sim-agent"),
+			L("[agent-loop] agent finished: 27 turns · $1.55 · 2m20s"),
+			S(4),
+			L("checks: 2 new commits on top · history not rewritten", "sim-dim"),
+			S(5),
+			L("== verify passed", "sim-ok"),
+			S(6),
+			L("git push origin HEAD:refs/heads/agent/issue-12   (never --force)", "sim-dim"),
+			{ label: "pr", remove: "agent:working" },
+			L("🤖 Pushed 2 commits addressing the review, with a reply per thread.", "sim-ok"),
+			L("Resolve the threads you're happy with. Merge is still your call.", "sim-ok"),
+		];
+	}
+
+	function setup(root: HTMLElement) {
+		const log = root.querySelector<HTMLElement>("[data-log]")!;
+		const steps = [...root.querySelectorAll<HTMLElement>("[data-steps] li")];
+		const options = root.querySelector<HTMLFieldSetElement>("[data-options]")!;
+		const prCard = root.querySelector<HTMLElement>("[data-pr-card]")!;
+		const btn = (a: string) => root.querySelector<HTMLButtonElement>(`[data-action="${a}"]`)!;
+		const start = btn("start");
+		const revise = btn("revise");
+		const reset = btn("reset");
+		const initialLog = log.innerHTML;
+		let run = 0; // bumped on reset so a playing sequence stops
+		let current = -1;
+
+		const labelBox = (k: Kind) => root.querySelector<HTMLElement>(`[data-labels="${k}"]`)!;
+
+		function setStep(i: number, state: string) {
+			steps.forEach((li, j) => {
+				li.classList.remove("is-active", "is-failed");
+				if (j < i) li.classList.add("is-done");
+				if (j >= i) li.classList.remove("is-done");
+			});
+			steps[i]?.classList.add(state === "failed" ? "is-failed" : state === "done" ? "is-done" : "is-active");
+			current = i;
+		}
+
+		function apply(e: SimEvent) {
+			if ("log" in e) {
+				const span = document.createElement("span");
+				if (e.log.cls) span.className = e.log.cls;
+				span.textContent = `\n${e.log.text}`;
+				log.appendChild(span);
+				log.scrollTop = log.scrollHeight;
+			} else if ("step" in e) {
+				setStep(e.step, e.state ?? "active");
+			} else if ("label" in e) {
+				const box = labelBox(e.label);
+				if (e.remove) box.querySelector(`[data-name="${e.remove}"]`)?.remove();
+				if (e.add) {
+					const chip = document.createElement("span");
+					chip.className = "sim-chip";
+					chip.dataset.name = e.add;
+					chip.style.background = COLORS[e.add] ?? "#555";
+					chip.textContent = e.add;
+					box.appendChild(chip);
+				}
+			} else if ("showPr" in e) {
+				prCard.hidden = false;
+			}
+		}
+
+		async function play(events: SimEvent[], done: () => void) {
+			const me = ++run;
+			const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+			for (const e of events) {
+				if (me !== run) return;
+				apply(e);
+				if ("log" in e) await new Promise((r) => setTimeout(r, reduce ? 60 : 550));
+			}
+			if (me === run) {
+				if (current >= 0 && !steps[current]?.classList.contains("is-failed")) setStep(current, "done");
+				done();
+			}
+		}
+
+		function resetAll() {
+			run++;
+			current = -1;
+			log.innerHTML = initialLog;
+			labelBox("issue").replaceChildren();
+			labelBox("pr").replaceChildren();
+			prCard.hidden = true;
+			steps.forEach((li) => li.classList.remove("is-active", "is-done", "is-failed"));
+			options.disabled = false;
+			start.disabled = false;
+			revise.disabled = true;
+		}
+
+		start.addEventListener("click", () => {
+			const outcome = root.querySelector<HTMLInputElement>("[data-options] input:checked")?.value ?? "pass";
+			start.disabled = true;
+			options.disabled = true;
+			play(issueRun(outcome), () => {
+				revise.disabled = outcome !== "pass";
+			});
+		});
+
+		revise.addEventListener("click", () => {
+			revise.disabled = true;
+			steps.forEach((li) => li.classList.remove("is-active", "is-done", "is-failed"));
+			play(reviseRun(), () => {});
+		});
+
+		reset.addEventListener("click", resetAll);
+	}
+
+	document.querySelectorAll<HTMLElement>("[data-loop-sim]").forEach(setup);
+</script>

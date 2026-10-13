@@ -1,0 +1,134 @@
+---
+title: "My development workflow with an agent loop"
+description: "How I now work on my side project: I write the issue, label it, and an agent loop running on my laptop works on it, verifies it and opens a PR for me to review."
+publishDate: "2026-10-13"
+tags: ["ai", "claude-code", "workflow", "github", "productivity"]
+---
+import LoopSimulator from "@/components/blog/LoopSimulator.astro";
+
+I wanted a setup where an agent picks up a task, works on it and opens a PR, running on my own laptop against my real local setup, with my own checks deciding whether the work is good enough. So I built a small loop around Claude Code, and it changed how my day looks. I spend less time typing code, and more time writing issues and reviewing PRs.
+
+In this post I will walk through that workflow, step by step. There is a small simulator in the middle so you can try the whole flow without installing anything.
+
+## My workflow now
+
+1. **I write the issue like I would for a teammate.** What to change, where, and how I will know it's done. The agent can't ask me questions while it works, so the issue has to carry everything.
+
+2. **I label it `agent:ready`.** That's the only "command" I give. No chat window, no prompt typing.
+
+3. **The loop picks it up within a few minutes.** It relabels the issue `agent:working`, creates a separate git worktree from `origin/main` and runs Claude Code headless on it. My own checkout is untouched, so I keep working on something else.
+
+4. **If I'm curious, I watch it live.** `agent-loop logs` streams what the agent reads, edits and runs.
+
+5. **It verifies the work itself, not the agent.** After the agent finishes, the loop runs my tests and lint again. If they fail, the issue comes back to me with `agent:needs-human` and the failing output in a comment.
+
+6. **I get a PR.** The description has a summary, how it was verified, risks, and the decisions the agent made without asking me. The last section is the one I read first.
+
+7. **I review it on GitHub as usual.** Inline comments, a review summary, whatever I would leave for anyone else.
+
+8. **I label the PR `agent:revise`.** The loop checks out the same branch, gives the agent my unresolved review threads, and it pushes new commits on top. It replies on the PR saying what it changed for each comment. If I'm happy, I resolve the threads. If not, I label it again.
+
+9. **I merge it myself.** The loop can turn on auto-merge for an issue I mark `agent:auto-merge`, but for now I keep merging manual.
+
+## Try the workflow
+
+Pick what should happen, label the issue, and watch the labels change. Once the PR is open, play the reviewer and send it back for changes.
+
+<LoopSimulator />
+
+## What I give it, and what I don't
+
+The loop is good with small, well-scoped, testable work:
+
+- copy and content changes on a page
+- a missing test
+- a small feature that touches a view, a controller and its test
+- follow-up changes from my own review
+
+I don't give it anything that needs a judgement call about the product, and some things are blocked on purpose:
+
+- **dependency changes** like `Gemfile` or `package.json`, because the agent can't install them
+- **database migrations**, because it doesn't run them against my local database
+- **CI config, credentials and `bin/`**, because the agent must not edit the checks that judge it
+
+If an issue needs any of these, the agent writes `BLOCKED:` with what it needs from me, and the issue comes back to me. If the issue itself is unclear, it does the same. That turned out to be useful: it tells me my issue was badly written.
+
+## The loop, or Claude on GitHub?
+
+I use both, for different things.
+
+**I assign the issue to Claude on GitHub when:**
+
+- it's a quick one-off fix and I'm on GitHub anyway
+- I have a question about the code and want Claude to dig into it
+- I'm away from my laptop, so the loop isn't running
+- I want a PR reviewed. Claude reviews PRs on GitHub, which gives a second pair of eyes before mine
+
+**I label it `agent:ready` for the loop when:**
+
+- the change needs my local setup to verify: my Ruby version, the local test database, assets built the way the app expects
+- I want my own `verify.sh` to be the gate, not a check I didn't write
+- I want hard limits per task: a dollar cap, a timeout, and paths the agent is not allowed to touch
+- I'm queuing up a few small issues and reviewing the PRs later
+
+One isn't better than the other. The hosted agent is always available and needs no setup. The loop is stricter and closer to how I actually run the app.
+
+## What day one looked like
+
+My first real issue was adding a section about a GitHub Action to my project's home page.
+
+- The loop opened the PR in **1 min 20 sec for $1.05**: the view change, a controller test, and the tests passing locally.
+- I reviewed it, left comments and labelled it `agent:revise`. It came back with **2 new commits in 2 min 20 sec for $1.55**.
+
+Not everything went smoothly on day one:
+
+1. **I started the loop before creating the labels.** It removed `agent:ready` and then failed to add `agent:working`, so my issue ended up with no labels at all. Now it checks the labels exist before it touches anything.
+
+2. **The agent couldn't update my architecture notes.** My project keeps its "why" docs in `.claude/rules/`, and I wanted them updated with each change. Claude Code doesn't let a headless agent edit anything under `.claude/`, whatever you allow. Now the agent writes the new version to a staging folder, and the loop copies it into place and commits it.
+
+3. **I blocked the loop by reviewing.** I had checked out the PR branch locally to try it, and git doesn't allow one branch in two worktrees. The loop's worktrees are detached now, and it pushes with `HEAD:refs/heads/<branch>`, so my checkout no longer matters.
+
+One thing I learned for my own habits: if I check out the agent's branch to review, I `git pull` it after a revise round, and I don't push to it while the agent is working.
+
+## The rules I keep
+
+1. **The agent never pushes.** It runs with an explicit list of allowed tools. `git push`, `gh` and web access are denied. The loop pushes, and only after its own checks pass.
+
+2. **Verify outside the agent.** "Tests pass" in the agent's summary means nothing until the loop has run them again.
+
+3. **Only my issues.** The loop only picks up issues, and only reads comments, from GitHub users I list. Issue text is input to an agent that can write code.
+
+4. **Small budget per task.** Each task has a dollar cap, a timeout and a daily limit.
+
+5. **Merge stays human.** At least until I trust what comes out.
+
+## What I would improve next
+
+The loop is good enough for one person and one side project. Some gaps are on purpose for now, and I know where they are:
+
+1. **No sandbox.** The agent's allowed tools run as my user on my machine. Before I give it wider permissions, it should run inside a container.
+
+2. **One task at a time.** There is a lock, so tasks run one after another. That's fine while I'm the only reviewer, because I can't review eight PRs in parallel anyway.
+
+3. **No automated review before the PR.** A second, read-only Claude pass that critiques the diff and sends it back once, before the PR is opened, would catch some issues earlier. It roughly doubles the cost per task, so I want to measure first.
+
+4. **Polling, not webhooks.** It checks GitHub every few minutes. Instant pickup would need a public endpoint, which doesn't make sense for a laptop.
+
+## Want to try it?
+
+The loop is open source: [pandurang90/agent-loop](https://github.com/pandurang90/agent-loop). It's one bash script, and it needs `git`, `gh`, `jq`, `claude` and `timeout`.
+
+```bash
+git clone https://github.com/pandurang90/agent-loop
+cd agent-loop
+mkdir -p ~/.config/agent-loop
+cp -r examples/minimal ~/.config/agent-loop/myapp   # or examples/rails
+# set REPO and ALLOWED_AUTHORS in ~/.config/agent-loop/myapp/config.sh
+
+./agent-loop --config ~/.config/agent-loop/myapp init            # create the labels
+./agent-loop --config ~/.config/agent-loop/myapp once --dry-run  # see the prompt it would send
+./agent-loop --config ~/.config/agent-loop/myapp run             # start the loop
+./agent-loop --config ~/.config/agent-loop/myapp logs            # watch the agent live
+```
+
+Start with small, boring issues, and keep merging manual. If you try it, let me know how it goes. PRs are welcome :)
